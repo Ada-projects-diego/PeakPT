@@ -3,6 +3,7 @@ import { StyleSheet, FlatList, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 type Exercise = {
   name: string;
@@ -43,13 +44,16 @@ const dummyWorkouts: Workout[] = [
   },
 ];
 
-const WorkoutItem = ({ workout }: { workout: Workout }) => {
+const WorkoutItem = ({ workout, onPress }: { workout: Workout; onPress: () => void }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <TouchableOpacity 
       style={styles.workoutItem} 
-      onPress={() => setIsExpanded(!isExpanded)}
+      onPress={() => {
+        setIsExpanded(!isExpanded);
+        onPress();
+      }}
     >
       {isExpanded ? (
         workout.exercises.map((exercise, index) => (
@@ -70,6 +74,8 @@ const WorkoutItem = ({ workout }: { workout: Workout }) => {
 };
 
 export const WorkoutList = () => {
+  const navigation = useNavigation();
+
   // Group workouts by date
   const groupedWorkouts = dummyWorkouts.reduce((acc, workout) => {
     if (!acc[workout.date]) {
@@ -81,15 +87,25 @@ export const WorkoutList = () => {
 
   const sortedDates = Object.keys(groupedWorkouts).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
+  const navigateToExerciseLog = (date: string) => {
+    navigation.navigate('ExerciseLogScreen', { date });
+  };
+
   return (
     <ThemedView style={styles.container}>
       <FlatList
         data={sortedDates}
         renderItem={({ item: date }) => (
           <View>
-            <ThemedText style={styles.dateHeader}>{date}</ThemedText>
+            <TouchableOpacity onPress={() => navigateToExerciseLog(date)}>
+              <ThemedText style={styles.dateHeader}>{date}</ThemedText>
+            </TouchableOpacity>
             {groupedWorkouts[date].map((workout) => (
-              <WorkoutItem key={workout.id} workout={workout} />
+              <WorkoutItem 
+                key={workout.id} 
+                workout={workout} 
+                onPress={() => navigateToExerciseLog(date)}
+              />
             ))}
           </View>
         )}
@@ -98,7 +114,10 @@ export const WorkoutList = () => {
           <ThemedText style={styles.emptyText}>No workouts recorded yet.</ThemedText>
         }
       />
-      <TouchableOpacity style={styles.addButton} onPress={() => console.log('Add new workout')}>
+      <TouchableOpacity 
+        style={styles.addButton} 
+        onPress={() => navigateToExerciseLog(new Date().toISOString().split('T')[0])}
+      >
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
     </ThemedView>
