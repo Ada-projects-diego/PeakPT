@@ -4,11 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { CalendarView } from '@/components/CalendarView';
-
-// This would be a separate component in your actual app
-const WorkoutList = () => (
-  <ThemedText style={styles.placeholderText}>List of past workouts (to be implemented)</ThemedText>
-);
+import { WorkoutList } from '@/containers/workoutList/workoutList';
 
 const StartTrackingButton = () => (
   <TouchableOpacity style={styles.button}>
@@ -22,7 +18,7 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>Welcome to PeakPT</ThemedText>
+      <ThemedText type="title" style={styles.title}>Welcome to Your Workout Tracker</ThemedText>
       
       <View style={styles.toggleContainer}>
         <Ionicons name="list" size={24} color={!isCalendarView ? "#007AFF" : "#666"} />
@@ -38,7 +34,9 @@ export default function HomeScreen() {
       </View>
 
       {hasWorkouts ? (
-        isCalendarView ? <CalendarView /> : <WorkoutList />
+        <View style={styles.contentContainer}>
+          {isCalendarView ? <CalendarView /> : <WorkoutList />}
+        </View>
       ) : (
         <ThemedView style={styles.noWorkoutsContainer}>
           <ThemedText style={styles.noWorkoutsText}>
@@ -74,6 +72,10 @@ const styles = StyleSheet.create({
   switch: {
     marginHorizontal: 10,
   },
+  contentContainer: {
+    flex: 1,
+    width: '100%',
+  },
   noWorkoutsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -93,8 +95,5 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-  },
-  placeholderText: {
-    color: '#ffffff',
   },
 });

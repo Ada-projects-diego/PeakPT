@@ -47,7 +47,9 @@ export const CalendarView = () => {
           textDayHeaderFontSize: 16
         }}
       />
-      <ThemedText style={styles.hint}>Tap a date to view workout details</ThemedText>
+     <ThemedText style={styles.hint}>
+  Tap a date to view workout details <br /> or add new exercises to a day
+</ThemedText>
     </View>
   );
 };
