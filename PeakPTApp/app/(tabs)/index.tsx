@@ -1,70 +1,100 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import React, { useState } from 'react';
+import { StyleSheet, Switch, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { CalendarView } from '@/components/calendarView';
+
+// This would be a separate component in your actual app
+const WorkoutList = () => (
+  <ThemedText style={styles.placeholderText}>List of past workouts (to be implemented)</ThemedText>
+);
+
+const StartTrackingButton = () => (
+  <TouchableOpacity style={styles.button}>
+    <ThemedText style={styles.buttonText}>Start Tracking</ThemedText>
+  </TouchableOpacity>
+);
 
 export default function HomeScreen() {
+  const [isCalendarView, setIsCalendarView] = useState(false);
+  const [hasWorkouts, setHasWorkouts] = useState(true); // Changed to true for testing
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ThemedView style={styles.container}>
+      <ThemedText type="title" style={styles.title}>Welcome to PeakPT</ThemedText>
+      
+      <View style={styles.toggleContainer}>
+        <Ionicons name="list" size={24} color={!isCalendarView ? "#007AFF" : "#666"} />
+        <Switch
+          trackColor={{ false: "#767577", true: "#81b0ff" }}
+          thumbColor={isCalendarView ? "#007AFF" : "#f4f3f4"}
+          ios_backgroundColor="#3e3e3e"
+          onValueChange={() => setIsCalendarView(!isCalendarView)}
+          value={isCalendarView}
+          style={styles.switch}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Hello g</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <Ionicons name="calendar" size={24} color={isCalendarView ? "#007AFF" : "#666"} />
+      </View>
+
+      {hasWorkouts ? (
+        isCalendarView ? <CalendarView /> : <WorkoutList />
+      ) : (
+        <ThemedView style={styles.noWorkoutsContainer}>
+          <ThemedText style={styles.noWorkoutsText}>
+            No workouts yet. Start tracking your progress!
+          </ThemedText>
+          <StartTrackingButton />
+        </ThemedView>
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: 20,
+    backgroundColor: '#121212',
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    marginVertical: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  switch: {
+    marginHorizontal: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  noWorkoutsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noWorkoutsText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#ffffff',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  placeholderText: {
+    color: '#ffffff',
   },
 });
