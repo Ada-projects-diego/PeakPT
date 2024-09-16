@@ -3,7 +3,7 @@ import { StyleSheet, Switch, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { CalendarView } from '@/components/calendarView';
+import { CalendarView } from '@/components/CalendarView';
 
 // This would be a separate component in your actual app
 const WorkoutList = () => (
