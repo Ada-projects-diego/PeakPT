@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { CalendarView } from '@/components/CalendarView';
-import { WorkoutList } from '@/containers/workoutList/workoutList';
+import { WorkoutList } from '@/containers/workoutList/WorkoutList';
 
 const StartTrackingButton = () => (
   <TouchableOpacity style={styles.button}>
