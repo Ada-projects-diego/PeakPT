@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Switch, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -21,16 +21,20 @@ export default function HomeScreen() {
       <ThemedText type="title" style={styles.title}>Welcome to Your Workout Tracker</ThemedText>
       
       <View style={styles.toggleContainer}>
-        <Ionicons name="list" size={24} color={!isCalendarView ? "#007AFF" : "#666"} />
-        <Switch
-          trackColor={{ false: "#767577", true: "#81b0ff" }}
-          thumbColor={isCalendarView ? "#007AFF" : "#f4f3f4"}
-          ios_backgroundColor="#3e3e3e"
-          onValueChange={() => setIsCalendarView(!isCalendarView)}
-          value={isCalendarView}
-          style={styles.switch}
-        />
-        <Ionicons name="calendar" size={24} color={isCalendarView ? "#007AFF" : "#666"} />
+        <TouchableOpacity onPress={() => setIsCalendarView(false)} style={styles.iconButton}>
+          <Ionicons 
+            name="list" 
+            size={24} 
+            color={!isCalendarView ? "#007AFF" : "#666"} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setIsCalendarView(true)} style={styles.iconButton}>
+          <Ionicons 
+            name="calendar" 
+            size={24} 
+            color={isCalendarView ? "#007AFF" : "#666"} 
+          />
+        </TouchableOpacity>
       </View>
 
       {hasWorkouts ? (
@@ -69,12 +73,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 20,
   },
-  switch: {
-    marginHorizontal: 10,
+  iconButton: {
+    padding: 10,
+    marginHorizontal: 20,
   },
   contentContainer: {
     flex: 1,
     width: '100%',
+    height: '100%',
   },
   noWorkoutsContainer: {
     flex: 1,
