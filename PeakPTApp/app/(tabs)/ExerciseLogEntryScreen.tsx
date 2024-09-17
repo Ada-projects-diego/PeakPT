@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, TextInput, Keyboard } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+type ExerciseSet = {
+  id: string;
+  weight: string;
+  reps: string;
+};
+
 const ExerciseLogEntryScreen = () => {
-  const router = useRouter();
   const exerciseName = "Push up";
-  const [weight, setWeight] = useState('0');
-  const [reps, setReps] = useState('0');
+  const [weight, setWeight] = useState('2');
+  const [reps, setReps] = useState('10');
+  const [sets, setSets] = useState<ExerciseSet[]>([]);
+  const [selectedSets, setSelectedSets] = useState<Set<string>>(new Set());
 
   const changeValue = (setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
     const numValue = parseInt(value);
@@ -20,8 +26,11 @@ const ExerciseLogEntryScreen = () => {
   };
 
   const handleSave = () => {
-    console.log('Saving:', { exerciseName, weight, reps });
-    router.back();
+    const newSet: ExerciseSet = { id: Date.now().toString(), weight, reps };
+    setSets(prevSets => [...prevSets, newSet]);
+    console.log('API Request:', { exerciseName, set: newSet, action: 'add' });
+    setWeight('2');
+    setReps('10');
   };
 
   const handleClear = () => {
@@ -38,6 +47,50 @@ const ExerciseLogEntryScreen = () => {
     }
   };
 
+  const handleUpdate = () => {
+    setSets(prevSets =>
+      prevSets.map(set =>
+        selectedSets.has(set.id) ? { ...set, weight, reps } : set
+      )
+    );
+    console.log('API Request:', { exerciseName, sets: Array.from(selectedSets), weight, reps, action: 'update' });
+    setSelectedSets(new Set());
+  };
+
+  const handleDelete = () => {
+    setSets(prevSets => prevSets.filter(set => !selectedSets.has(set.id)));
+    console.log('API Request:', { exerciseName, sets: Array.from(selectedSets), action: 'delete' });
+    setSelectedSets(new Set());
+  };
+
+  const toggleSetSelection = (id: string) => {
+    setSelectedSets(prevSelected => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
+    });
+  };
+
+  const renderSet = ({ item, index }: { item: ExerciseSet; index: number }) => (
+    <TouchableOpacity
+      style={[
+        styles.setItem,
+        selectedSets.has(item.id) && styles.selectedSetItem
+      ]}
+      onPress={() => toggleSetSelection(item.id)}
+    >
+      <ThemedText style={styles.setText}>
+        {index + 1}   {item.weight} kgs   {item.reps} reps
+      </ThemedText>
+    </TouchableOpacity>
+  );
+
+  const isActionDisabled = parseInt(reps) === 0;
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>{exerciseName}</ThemedText>
@@ -53,8 +106,6 @@ const ExerciseLogEntryScreen = () => {
             value={weight}
             onChangeText={(value) => handleInputChange(setWeight, value)}
             keyboardType="numeric"
-            onFocus={() => setWeight('')}
-            onBlur={() => weight === '' && setWeight('0')}
           />
           <TouchableOpacity style={styles.button} onPress={() => changeValue(setWeight, weight, 1)}>
             <Ionicons name="add" size={24} color="#fff" />
@@ -73,8 +124,6 @@ const ExerciseLogEntryScreen = () => {
             value={reps}
             onChangeText={(value) => handleInputChange(setReps, value)}
             keyboardType="numeric"
-            onFocus={() => setReps('')}
-            onBlur={() => reps === '' && setReps('0')}
           />
           <TouchableOpacity style={styles.button} onPress={() => changeValue(setReps, reps, 1)}>
             <Ionicons name="add" size={24} color="#fff" />
@@ -83,13 +132,41 @@ const ExerciseLogEntryScreen = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, styles.saveButton]} onPress={handleSave}>
-          <ThemedText style={styles.buttonText}>SAVE</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.clearButton]} onPress={handleClear}>
-          <ThemedText style={styles.buttonText}>CLEAR</ThemedText>
-        </TouchableOpacity>
+        {selectedSets.size > 0 ? (
+          <>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.updateButton, isActionDisabled && styles.disabledButton]}
+              onPress={handleUpdate}
+              disabled={isActionDisabled}
+            >
+              <ThemedText style={styles.buttonText}>UPDATE</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete}>
+              <ThemedText style={styles.buttonText}>DELETE</ThemedText>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.saveButton, isActionDisabled && styles.disabledButton]}
+              onPress={handleSave}
+              disabled={isActionDisabled}
+            >
+              <ThemedText style={styles.buttonText}>SAVE</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionButton, styles.clearButton]} onPress={handleClear}>
+              <ThemedText style={styles.buttonText}>CLEAR</ThemedText>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
+
+      <FlatList
+        data={sets}
+        renderItem={renderSet}
+        keyExtractor={item => item.id}
+        style={styles.setList}
+      />
     </ThemedView>
   );
 };
@@ -140,7 +217,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginBottom: 20,
   },
   actionButton: {
     flex: 1,
@@ -157,10 +234,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     marginLeft: 10,
   },
+  updateButton: {
+    backgroundColor: '#4CAF50',
+    marginRight: 10,
+  },
+  deleteButton: {
+    backgroundColor: '#F44336',
+    marginLeft: 10,
+  },
+  disabledButton: {
+    backgroundColor: '#666666',
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  setList: {
+    flex: 1,
+  },
+  setItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  selectedSetItem: {
+    backgroundColor: '#2C2C2C',
+  },
+  setText: {
+    color: '#FFFFFF',
+    fontSize: 16,
   },
 });
 
