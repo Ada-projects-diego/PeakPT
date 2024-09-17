@@ -1,0 +1,153 @@
+[
+  {
+    "id": "1",
+    "date": "2024-09-05T00:00:00.000Z",
+    "name": "Upper body workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Bent Over Row",
+        "sets": [
+          {
+            "reps": 5,
+            "weight": 43
+          },
+          {
+            "reps": 5,
+            "weight": 43
+          },
+          {
+            "reps": 5,
+            "weight": 43
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Bench Press",
+        "sets": [
+          {
+            "reps": 5,
+            "weight": 20.5
+          },
+          {
+            "reps": 5,
+            "weight": 20.5
+          },
+          {
+            "reps": 5,
+            "weight": 20.5
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "name": "Pull up",
+        "sets": [
+          {
+            "reps": 5,
+            "weight": 0
+          },
+          {
+            "reps": 5,
+            "weight": 0
+          },
+          {
+            "reps": 5,
+            "weight": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "date": "2024-09-07T00:00:00.000Z",
+    "name": "Leg day workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Squats",
+        "sets": [
+          {
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "reps": 8,
+            "weight": 70
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Deadlifts",
+        "sets": [
+          {
+            "reps": 5,
+            "weight": 85
+          },
+          {
+            "reps": 5,
+            "weight": 85
+          },
+          {
+            "reps": 5,
+            "weight": 85
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "date": "2024-09-09T00:00:00.000Z",
+    "name": "Core workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Rolling Planks",
+        "sets": [
+          {
+            "reps": 1,
+            "weight": 0
+          },
+          {
+            "reps": 1,
+            "weight": 0
+          },
+          {
+            "reps": 1,
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Russian Twists",
+        "sets": [
+          {
+            "reps": 20,
+            "weight": 5
+          },
+          {
+            "reps": 20,
+            "weight": 5
+          },
+          {
+            "reps": 20,
+            "weight": 5
+          }
+        ]
+      }
+    ]
+  }
+]
