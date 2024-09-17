@@ -7,10 +7,9 @@ const api = axios.create({
 });
 
 export interface Exercise {
+  id: string;
   name: string;
-  sets: number;
-  reps: number;
-  weight: number;
+  sets: Array<{ reps: number; weight: number }>;
 }
 
 export interface Workout {
@@ -34,5 +33,13 @@ export const agent = {
       api.put<Workout>(`/workouts/${id}`, workout).then(responseBody),
     delete: (id: string): Promise<void> => 
       api.delete<void>(`/workouts/${id}`).then(responseBody),
+    getExercisesByDate: (date: string): Promise<Exercise[]> =>
+      api.get<Exercise[]>(`/workouts/date/${date}`).then(responseBody),
+    addExercise: (date: string, exercise: Omit<Exercise, 'id'>): Promise<Exercise> =>
+      api.post<Exercise>(`/workouts/date/${date}/exercises`, exercise).then(responseBody),
+    updateExercise: (date: string, exerciseId: string, exercise: Partial<Exercise>): Promise<Exercise> =>
+      api.put<Exercise>(`/workouts/date/${date}/exercises/${exerciseId}`, exercise).then(responseBody),
+    deleteExercise: (date: string, exerciseId: string): Promise<void> =>
+      api.delete<void>(`/workouts/date/${date}/exercises/${exerciseId}`).then(responseBody),
   },
 };

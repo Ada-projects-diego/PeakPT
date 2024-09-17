@@ -1,40 +1,46 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { agent, Exercise } from '@/api/agent'; // Adjust the import path as needed
 
-type Exercise = {
-  id: string;
-  name: string;
-  sets: Array<{ reps: number; weight: number }>;
+type RouteParams = {
+  date: string;
 };
 
 const ExerciseLogScreen = () => {
   const navigation = useNavigation();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [exercises, setExercises] = useState<Exercise[]>([
-    {
-      id: '1',
-      name: 'Bench Press',
-      sets: [
-        { reps: 10, weight: 135 },
-        { reps: 8, weight: 155 },
-        { reps: 6, weight: 175 },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Squats',
-      sets: [
-        { reps: 12, weight: 185 },
-        { reps: 10, weight: 205 },
-        { reps: 8, weight: 225 },
-      ],
-    },
-  ]);
+  const route = useRoute();
+  const { date } = route.params as RouteParams;
+  console.log("Received date:", date);
+
+  const [currentDate, setCurrentDate] = useState(new Date(date));
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('Fetching exercises for date:', currentDate);
+    fetchExercisesForDate(currentDate);
+  }, [currentDate]);
+
+  const fetchExercisesForDate = async (date: Date) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const dateString = date.toISOString().split('T')[0];
+      const fetchedExercises = await agent.Workouts.getExercisesByDate(dateString);
+      setExercises(fetchedExercises);
+    } catch (err) {
+      console.error('Failed to fetch exercises:', err);
+      setError('Failed to load exercises. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
@@ -43,21 +49,28 @@ const ExerciseLogScreen = () => {
   };
 
   const addExercise = () => {
-    navigation.navigate('ExerciseLibraryScreen' as never);
+    navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString() } as never);
   };
 
   const editExercise = (exercise: Exercise) => {
-    navigation.navigate('ExerciseLogEntryScreen' as never, { exercise } as never);
+    navigation.navigate('ExerciseLogEntryScreen' as never, { exercise, date: currentDate.toISOString() } as never);
   };
 
   const initiateDelete = (id: string) => {
     setDeletingId(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingId) {
-      setExercises(exercises.filter(exercise => exercise.id !== deletingId));
-      setDeletingId(null);
+      try {
+        await agent.Workouts.deleteExercise(currentDate.toISOString(), deletingId);
+        setExercises(exercises.filter(exercise => exercise.id !== deletingId));
+      } catch (err) {
+        console.error('Failed to delete exercise:', err);
+        setError('Failed to delete exercise. Please try again.');
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -115,12 +128,21 @@ const ExerciseLogScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={exercises}
-        renderItem={renderExercise}
-        keyExtractor={(item) => item.id}
-        style={styles.exerciseList}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : error ? (
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+      ) : (
+        <FlatList
+          data={exercises}
+          renderItem={renderExercise}
+          keyExtractor={(item) => item.id}
+          style={styles.exerciseList}
+          ListEmptyComponent={
+            <ThemedText style={styles.emptyText}>No exercises recorded for this date.</ThemedText>
+          }
+        />
+      )}
 
       <TouchableOpacity style={styles.addButton} onPress={addExercise}>
         <Ionicons name="add" size={30} color="#FFFFFF" />
@@ -128,7 +150,6 @@ const ExerciseLogScreen = () => {
     </ThemedView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -196,6 +217,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  errorText: {
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  emptyText: {
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 

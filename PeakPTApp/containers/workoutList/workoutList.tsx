@@ -4,7 +4,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { agent, Workout } from '@/api/agent'; // Adjust the import path as needed
+import { agent, Workout, Exercise } from '@/api/agent';
 
 export const WorkoutList = () => {
   const navigation = useNavigation();
@@ -15,18 +15,20 @@ export const WorkoutList = () => {
       try {
         console.log('Fetching workouts...');
         const fetchedWorkouts = await agent.Workouts.list();
+        console.log('Fetched workouts:', JSON.stringify(fetchedWorkouts, null, 2));
         setWorkouts(fetchedWorkouts);
       } catch (error) {
         console.error('Failed to fetch workouts:', error);
       }
-    };
-
+    }; // TODO: move this into it's own file
+  
     fetchWorkouts();
   }, []);
 
   const handleAddWorkout = () => {
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-    navigation.navigate('ExerciseLogScreen' as never, { date: today } as never);
+    console.log('Navigating to ExerciseLogScreen for today:', today);
+    navigation.navigate('ExerciseLogScreen' as [never, never], { date: today } as [never, never]);
   };
 
   const renderWorkoutItem = ({ item: workout }: { item: Workout }) => (
@@ -62,7 +64,14 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
   };
 
   const navigateToExerciseLog = () => {
+    console.log('Navigating to ExerciseLogScreen for date:', workout.date);
     navigation.navigate('ExerciseLogScreen' as never, { date: workout.date } as never);
+  };
+
+  const renderExerciseDetails = (exercise: Exercise) => {
+    const totalSets = exercise.sets.length;
+    const lastSet = exercise.sets[totalSets - 1];
+    return `${totalSets} x ${lastSet.reps} @ ${lastSet.weight} kg`;
   };
 
   return (
@@ -94,7 +103,7 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
             <View key={index} style={styles.exerciseItem}>
               <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
               <ThemedText style={styles.exerciseDetails}>
-                {exercise.sets} x {exercise.reps} @ {exercise.weight} kg
+                {renderExerciseDetails(exercise)}
               </ThemedText>
             </View>
           ))}
