@@ -6,24 +6,40 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Fake data
+// Updated fake data to match WorkoutList structure
 let workouts = [
   {
     id: '1',
-    date: '2024-07-15',
-    name: 'Upper Body Workout',
+    date: '2024-09-05T00:00:00.000Z', // ISO date string
+    name: 'Upper body workout',
     exercises: [
-      { name: 'Bench Press', sets: 3, reps: 10, weight: 60 },
-      { name: 'Pull-ups', sets: 3, reps: 8, weight: 0 },
+      { name: 'Bent Over Row', sets: 3, reps: 5, weight: 43 },
+      { name: 'Bench Press', sets: 3, reps: 5, weight: 20.5 },
+      { name: 'Pull up', sets: 3, reps: 5, weight: 0 },
+      { name: 'Overhead Press', sets: 3, reps: 5, weight: 25 },
+      { name: 'Dumbbell Curls', sets: 3, reps: 10, weight: 10 },
     ],
   },
   {
     id: '2',
-    date: '2024-07-17',
-    name: 'Lower Body Workout',
+    date: '2024-09-07T00:00:00.000Z', // ISO date string
+    name: 'Leg day workout',
     exercises: [
-      { name: 'Squats', sets: 4, reps: 8, weight: 80 },
-      { name: 'Deadlifts', sets: 3, reps: 5, weight: 100 },
+      { name: 'Squats', sets: 4, reps: 8, weight: 70 },
+      { name: 'Deadlifts', sets: 3, reps: 5, weight: 85 },
+      { name: 'Leg Press', sets: 3, reps: 10, weight: 100 },
+      { name: 'Lunges', sets: 3, reps: 12, weight: 20 },
+    ],
+  },
+  {
+    id: '3',
+    date: '2024-09-09T00:00:00.000Z', // ISO date string
+    name: 'Core workout',
+    exercises: [
+      { name: 'Rolling Planks', sets: 3, reps: 1, weight: 0 },
+      { name: 'Russian Twists', sets: 3, reps: 20, weight: 5 },
+      { name: 'Leg Raises', sets: 3, reps: 15, weight: 0 },
+      { name: 'Bicycle Crunches', sets: 3, reps: 20, weight: 0 },
     ],
   },
 ];

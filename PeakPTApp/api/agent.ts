@@ -1,23 +1,23 @@
 import axios, { AxiosResponse } from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api'; // Update this to your mock API server's address
+const API_BASE_URL = 'http://localhost:3000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
-
-export interface Workout {
-  id: string;
-  date: string;
-  name: string;
-  exercises: Exercise[];
-}
 
 export interface Exercise {
   name: string;
   sets: number;
   reps: number;
   weight: number;
+}
+
+export interface Workout {
+  id: string;
+  date: string;
+  name: string;
+  exercises: Exercise[];
 }
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;

@@ -1,21 +1,42 @@
-import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-
-// This would come from your actual data
-const workoutDates = {
-  '2024-09-01': { marked: true },
-  '2024-09-10': { marked: true },
-  '2024-09-15': { marked: true },
-};
+import { agent, Workout } from '@/api/agent'; // Adjust the import path as needed
 
 export const CalendarView = () => {
   const navigation = useNavigation();
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [key, setKey] = useState(0);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedWorkouts = await agent.Workouts.list();
+        setWorkouts(fetchedWorkouts);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch workouts:', err);
+        setError('Failed to load workouts. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWorkouts();
+  }, []);
+
+  const workoutDates = workouts.reduce((acc, workout) => {
+    const date = workout.date.split('T')[0];
+    acc[date] = { marked: true };
+    return acc;
+  }, {} as { [key: string]: { marked: boolean } });
 
   const onDayPress = (day: DateData) => {
     console.log('Day pressed:', day.dateString);
@@ -40,6 +61,14 @@ export const CalendarView = () => {
           <ThemedText style={styles.todayButtonText}>Today</ThemedText>
         </TouchableOpacity>
       </View>
+      
+      {isLoading && (
+        <View style={styles.overlayContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <ThemedText style={styles.loadingText}>Loading workouts...</ThemedText>
+        </View>
+      )}
+      
       <Calendar
         key={key}
         current={currentDate}
@@ -93,6 +122,16 @@ export const CalendarView = () => {
           );
         }}
       />
+      
+      {error && (
+        <View style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
+          <TouchableOpacity onPress={() => navigation.navigate('HomeScreen' as never)} style={styles.retryButton}>
+            <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <ThemedText style={styles.hint}>
         Tap a date to view workout details or add new exercises to a day
       </ThemedText>
@@ -149,6 +188,38 @@ const styles = StyleSheet.create({
     color: '#4d4d4d',
   },
   todayText: {
+    fontWeight: 'bold',
+  },
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(30, 30, 30, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#ffffff',
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderRadius: 5,
+    margin: 10,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: 'center',
+  },
+  retryButtonText: {
+    color: '#ffffff',
     fontWeight: 'bold',
   },
 });
