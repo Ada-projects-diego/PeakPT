@@ -1,7 +1,8 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { ThemedText } from '@/components/ThemedText';
+import { Ionicons } from '@expo/vector-icons';
 
 // This would come from your actual data
 const workoutDates = {
@@ -11,7 +12,8 @@ const workoutDates = {
 };
 
 export const CalendarView = () => {
-  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [key, setKey] = useState(0);
 
   const onDayPress = (day: DateData) => {
     console.log('selected day', day);
@@ -19,12 +21,26 @@ export const CalendarView = () => {
     // or navigate to a detail page
   };
 
+  const goToToday = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setCurrentDate(today);
+    setKey(prevKey => prevKey + 1);  // Force re-render of Calendar
+  }, []);
+
   return (
     <View style={styles.container}>
+      <View style={styles.calendarHeader}>
+        <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
+          <Ionicons name="today-outline" size={24} color="#007AFF" />
+          <ThemedText style={styles.todayButtonText}>Today</ThemedText>
+        </TouchableOpacity>
+      </View>
       <Calendar
+        key={key}
+        current={currentDate}
         markedDates={{
           ...workoutDates,
-          [today]: { ...workoutDates[today], today: true }
+          [currentDate]: { ...workoutDates[currentDate], marked: true }
         }}
         onDayPress={onDayPress}
         theme={{
@@ -50,7 +66,7 @@ export const CalendarView = () => {
           textDayHeaderFontSize: 16,
         }}
         dayComponent={({date, state, marking}) => {
-          const isToday = date?.dateString === today;
+          const isToday = date?.dateString === currentDate;
           const isMarked = marking?.marked;
           return (
             <View style={[
@@ -81,6 +97,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 20,
     backgroundColor: '#1e1e1e',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  todayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  todayButtonText: {
+    color: '#007AFF',
+    marginLeft: 5,
   },
   hint: {
     textAlign: 'center',
