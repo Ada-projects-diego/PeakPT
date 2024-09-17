@@ -53,22 +53,29 @@ const dummyWorkouts: Workout[] = [
 
 const WorkoutItem = ({ workout }: { workout: Workout }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigation = useNavigation();
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  const navigateToExerciseLog = () => {
+    navigation.navigate('ExerciseLogScreen', { date: workout.date.toISOString() });
+  };
+
   return (
-    <TouchableOpacity 
-      style={styles.workoutContainer}
-      onPress={() => setIsExpanded(!isExpanded)}
-    >
+    <View style={styles.workoutContainer}>
       <View style={styles.workoutHeader}>
-        <ThemedText style={styles.workoutDate}>{formatDate(workout.date)}</ThemedText>
+        <TouchableOpacity onPress={navigateToExerciseLog}>
+          <ThemedText style={styles.workoutDate}>{formatDate(workout.date)}</ThemedText>
+        </TouchableOpacity>
         <ThemedText style={styles.workoutName}>{workout.name}</ThemedText>
       </View>
       
-      <View style={styles.workoutSummary}>
+      <TouchableOpacity 
+        style={styles.workoutSummary}
+        onPress={() => setIsExpanded(!isExpanded)}
+      >
         <ThemedText style={styles.exerciseCount}>
           {workout.exercises.length} exercise{workout.exercises.length !== 1 ? 's' : ''}
         </ThemedText>
@@ -77,7 +84,7 @@ const WorkoutItem = ({ workout }: { workout: Workout }) => {
           size={24} 
           color="#B0B0B0" 
         />
-      </View>
+      </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.exercisesContainer}>
@@ -91,17 +98,11 @@ const WorkoutItem = ({ workout }: { workout: Workout }) => {
           ))}
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 
 export const WorkoutList = () => {
-  const navigation = useNavigation();
-
-  const navigateToExerciseLog = (date: Date) => {
-    navigation.navigate('ExerciseLogScreen', { date: date.toISOString() });
-  };
-
   return (
     <ThemedView style={styles.container}>
       <FlatList
@@ -116,7 +117,10 @@ export const WorkoutList = () => {
       />
       <TouchableOpacity 
         style={styles.addButton} 
-        onPress={() => navigateToExerciseLog(new Date())}
+        onPress={() => {
+          const navigation = useNavigation();
+          navigation.navigate('ExerciseLogScreen', { date: new Date().toISOString() });
+        }}
       >
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
@@ -146,6 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textDecorationLine: 'underline',
   },
   workoutName: {
     fontSize: 14,
