@@ -18,8 +18,8 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>Welcome to Your Workout Tracker</ThemedText>
-      
+      <ThemedText type="title" style={styles.title}>Welcome to PeakPT</ThemedText>
+      <ThemedText type="subtitle" style={styles.subtitle}>Scaling peaks, building strength</ThemedText>
       <View style={styles.toggleContainer}>
         <TouchableOpacity onPress={() => setIsCalendarView(false)} style={styles.iconButton}>
           <Ionicons 
@@ -65,7 +65,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subtitle: {
+    color: '#B0B0B0',
+    fontSize: 16,
     marginBottom: 20,
+    textAlign: 'center',
   },
   toggleContainer: {
     flexDirection: 'row',
