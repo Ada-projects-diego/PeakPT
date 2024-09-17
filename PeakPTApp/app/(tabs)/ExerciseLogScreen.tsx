@@ -14,7 +14,6 @@ const ExerciseLogScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { date: routeDate } = route.params as RouteParams;
-  console.log('Received date:', routeDate);
   const [currentDate, setCurrentDate] = useState(new Date(routeDate));
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,12 +21,10 @@ const ExerciseLogScreen = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Route date changed:', routeDate);
     setCurrentDate(new Date(routeDate));
   }, [routeDate]);
 
   useEffect(() => {
-    console.log('Fetching exercises for date:', currentDate.toISOString());
     fetchExercisesForDate(currentDate);
   }, [currentDate]);
 
@@ -53,11 +50,11 @@ const ExerciseLogScreen = () => {
   };
 
   const addExercise = () => {
-    navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString() } as never);
+    navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString().split('T')[0] } as never);
   };
 
   const editExercise = (exercise: Exercise) => {
-    navigation.navigate('ExerciseLogEntryScreen' as never, { exercise, date: currentDate.toISOString() } as never);
+    navigation.navigate('ExerciseLogEntryScreen' as never, { exerciseId: exercise.id, date: currentDate.toISOString().split('T')[0] } as never);
   };
 
   const initiateDelete = (id: string) => {
@@ -67,7 +64,7 @@ const ExerciseLogScreen = () => {
   const confirmDelete = async () => {
     if (deletingId) {
       try {
-        await agent.Workouts.deleteExercise(currentDate.toISOString(), deletingId);
+        await agent.Workouts.deleteExercise(currentDate.toISOString().split('T')[0], deletingId);
         setExercises(exercises.filter(exercise => exercise.id !== deletingId));
       } catch (err) {
         console.error('Failed to delete exercise:', err);

@@ -1,56 +1,65 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, FlatList, TextInput, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, FlatList, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { agent, Exercise } from '@/api/agent';
 
-type Exercise = {
-  id: string;
-  name: string;
-  workoutCount: number;
+type RouteParams = {
+  date: string;
 };
 
-const initialExercises: Exercise[] = [
-  { id: '1', name: 'Ab Wheel Rollout', workoutCount: 0 },
-  { id: '2', name: 'Banana', workoutCount: 3 },
-  { id: '3', name: 'Cable Crunch', workoutCount: 0 },
-  { id: '4', name: 'Crunch', workoutCount: 0 },
-  { id: '5', name: 'Crunch Machine', workoutCount: 0 },
-  { id: '6', name: 'Decline Crunch', workoutCount: 0 },
-  { id: '7', name: 'Dragon Flag', workoutCount: 7 },
-  { id: '8', name: 'Hanging Knee Raise', workoutCount: 1 },
-  { id: '9', name: 'Hanging Leg Mid Bar', workoutCount: 0 },
-];
-
 const ExerciseLibraryScreen = () => {
-  const router = useRouter();
-  const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { date } = route.params as RouteParams;
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchExercises();
+  }, []);
+
+  const fetchExercises = async () => {
+    try {
+      const data = await agent.Exercises.list();
+      setExercises(data);
+      setFilteredExercises(data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching exercises:', error);
+      setIsLoading(false);
+    }
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const filteredExercises = initialExercises.filter(exercise =>
+    const filtered = exercises.filter(exercise =>
       exercise.name.toLowerCase().includes(query.toLowerCase())
     );
-    setExercises(filteredExercises);
+    setFilteredExercises(filtered);
   };
 
   const renderExerciseItem = ({ item }: { item: Exercise }) => (
     <TouchableOpacity 
       style={styles.exerciseItem}
-      onPress={() => router.push({
-        pathname: '/ExerciseLogEntryScreen',
-        params: { exerciseName: item.name }
-      })}
+      onPress={() => navigation.navigate('ExerciseLogEntryScreen' as never, { exerciseId: item.id, date: date } as never)}
     >
       <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
-      <View style={styles.workoutCountContainer}>
-        <ThemedText style={styles.workoutCount}>{item.workoutCount} workouts</ThemedText>
-        <Ionicons name="chevron-forward" size={20} color="#808080" />
-      </View>
+      <Ionicons name="chevron-forward" size={20} color="#808080" />
     </TouchableOpacity>
   );
+
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -65,7 +74,7 @@ const ExerciseLibraryScreen = () => {
         />
       </View>
       <FlatList
-        data={exercises}
+        data={filteredExercises}
         renderItem={renderExerciseItem}
         keyExtractor={item => item.id}
         style={styles.list}
@@ -77,6 +86,12 @@ const ExerciseLibraryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#121212',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#121212',
   },
   searchContainer: {
@@ -111,15 +126,6 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 16,
     color: '#FFFFFF',
-  },
-  workoutCountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  workoutCount: {
-    fontSize: 14,
-    color: '#808080',
-    marginRight: 5,
   },
 });
 

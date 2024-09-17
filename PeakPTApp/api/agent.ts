@@ -42,4 +42,20 @@ export const agent = {
     deleteExercise: (date: string, exerciseId: string): Promise<void> =>
       api.delete<void>(`/workouts/date/${date}/exercises/${exerciseId}`).then(responseBody),
   },
+  Exercises: {
+    list: (): Promise<Exercise[]> => 
+      api.get<Exercise[]>('/exercises').then(responseBody),
+    details: (id: string): Promise<Exercise> => 
+      api.get<Exercise>(`/exercises/${id}`).then(responseBody),
+  },
 };
+
+// // New function to get all exercises
+// export const getExercises = (): Promise<Exercise[]> => {
+//   return agent.Exercises.list();
+// };
+
+// // New function to get a specific exercise
+// export const getExercise = (id: string): Promise<Exercise> => {
+//   return agent.Exercises.details(id);
+// };
