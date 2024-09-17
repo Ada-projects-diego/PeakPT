@@ -3,6 +3,7 @@ import { StyleSheet, View, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useNavigation } from '@react-navigation/native';
 
 type Exercise = {
   id: string;
@@ -11,6 +12,7 @@ type Exercise = {
 };
 
 const ExerciseLogScreen = () => {
+  const navigation = useNavigation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [exercises, setExercises] = useState<Exercise[]>([
     {
@@ -32,6 +34,7 @@ const ExerciseLogScreen = () => {
       ],
     },
   ]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
@@ -40,13 +43,54 @@ const ExerciseLogScreen = () => {
   };
 
   const addExercise = () => {
-    // Implement logic to add a new exercise
-    console.log('Add new exercise');
+    navigation.navigate('ExerciseLibraryScreen' as never);
+  };
+
+  const editExercise = (exercise: Exercise) => {
+    navigation.navigate('ExerciseLogEntryScreen' as never, { exercise } as never);
+  };
+
+  const initiateDelete = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      setExercises(exercises.filter(exercise => exercise.id !== deletingId));
+      setDeletingId(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeletingId(null);
   };
 
   const renderExercise = ({ item }: { item: Exercise }) => (
     <View style={styles.exerciseContainer}>
-      <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
+      <View style={styles.exerciseHeader}>
+        <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
+        <View style={styles.exerciseActions}>
+          {deletingId === item.id ? (
+            <>
+              <TouchableOpacity onPress={confirmDelete} style={styles.actionButton}>
+                <Ionicons name="checkmark-circle-outline" size={24} color="#4CD964" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={cancelDelete} style={styles.actionButton}>
+                <Ionicons name="close-circle-outline" size={24} color="#FF3B30" />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity onPress={() => editExercise(item)} style={styles.actionButton}>
+                <Ionicons name="create-outline" size={24} color="#007AFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => initiateDelete(item.id)} style={styles.actionButton}>
+                <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
       {item.sets.map((set, index) => (
         <View key={index} style={styles.setContainer}>
           <ThemedText style={styles.setText}>Set {index + 1}:</ThemedText>
@@ -111,11 +155,23 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
   },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   exerciseName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 10,
+    flex: 1,
+  },
+  exerciseActions: {
+    flexDirection: 'row',
+  },
+  actionButton: {
+    marginLeft: 10,
   },
   setContainer: {
     flexDirection: 'row',

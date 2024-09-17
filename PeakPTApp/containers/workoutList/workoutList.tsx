@@ -51,16 +51,46 @@ const dummyWorkouts: Workout[] = [
   },
 ];
 
-const WorkoutItem = ({ workout }: { workout: Workout }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+export const WorkoutList = () => {
   const navigation = useNavigation();
+
+  const handleAddWorkout = () => {
+    navigation.navigate('ExerciseLogScreen' as never, { date: new Date().toISOString() } as never);
+  };
+
+  const renderWorkoutItem = ({ item: workout }: { item: Workout }) => (
+    <WorkoutItem workout={workout} navigation={navigation} />
+  );
+
+  return (
+    <ThemedView style={styles.container}>
+      <FlatList
+        data={dummyWorkouts}
+        renderItem={renderWorkoutItem}
+        keyExtractor={item => item.id}
+        ListEmptyComponent={
+          <ThemedText style={styles.emptyText}>No workouts recorded yet.</ThemedText>
+        }
+      />
+      <TouchableOpacity 
+        style={styles.addButton} 
+        onPress={handleAddWorkout}
+      >
+        <Ionicons name="add" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
+    </ThemedView>
+  );
+};
+
+const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: any }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const navigateToExerciseLog = () => {
-    navigation.navigate('ExerciseLogScreen', { date: workout.date.toISOString() });
+    navigation.navigate('ExerciseLogScreen' as never, { date: workout.date.toISOString() } as never);
   };
 
   return (
@@ -99,32 +129,6 @@ const WorkoutItem = ({ workout }: { workout: Workout }) => {
         </View>
       )}
     </View>
-  );
-};
-
-export const WorkoutList = () => {
-  return (
-    <ThemedView style={styles.container}>
-      <FlatList
-        data={dummyWorkouts}
-        renderItem={({ item: workout }) => (
-          <WorkoutItem workout={workout} />
-        )}
-        keyExtractor={item => item.id}
-        ListEmptyComponent={
-          <ThemedText style={styles.emptyText}>No workouts recorded yet.</ThemedText>
-        }
-      />
-      <TouchableOpacity 
-        style={styles.addButton} 
-        onPress={() => {
-          const navigation = useNavigation();
-          navigation.navigate('ExerciseLogScreen', { date: new Date().toISOString() });
-        }}
-      >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
-      </TouchableOpacity>
-    </ThemedView>
   );
 };
 
