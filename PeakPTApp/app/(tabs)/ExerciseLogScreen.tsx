@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { agent, Exercise } from '@/api/agent'; // Adjust the import path as needed
+import { agent, Exercise } from '@/api/agent';
 
 type RouteParams = {
   date: string;
@@ -13,17 +13,21 @@ type RouteParams = {
 const ExerciseLogScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { date } = route.params as RouteParams;
-  console.log("Received date:", date);
-
-  const [currentDate, setCurrentDate] = useState(new Date(date));
+  const { date: routeDate } = route.params as RouteParams;
+  console.log('Received date:', routeDate);
+  const [currentDate, setCurrentDate] = useState(new Date(routeDate));
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Fetching exercises for date:', currentDate);
+    console.log('Route date changed:', routeDate);
+    setCurrentDate(new Date(routeDate));
+  }, [routeDate]);
+
+  useEffect(() => {
+    console.log('Fetching exercises for date:', currentDate.toISOString());
     fetchExercisesForDate(currentDate);
   }, [currentDate]);
 
@@ -45,7 +49,7 @@ const ExerciseLogScreen = () => {
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    setCurrentDate(newDate);
+    navigation.setParams({ date: newDate.toISOString() } as never);
   };
 
   const addExercise = () => {
@@ -150,6 +154,7 @@ const ExerciseLogScreen = () => {
     </ThemedView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
