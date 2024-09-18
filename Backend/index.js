@@ -313,6 +313,63 @@ app.put('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, r
   }
 });
 
+// Add a new set to an exercise (handles new workout, new exercise, and existing exercise scenarios)
+app.post('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, res) => {
+  let workouts = await readJsonFile(workoutsPath);
+  if (!workouts) {
+    return res.status(500).json({ message: 'Error reading workouts' });
+  }
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(req.params.date)) {
+    return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+  }
+
+  const { reps, weight } = req.body;
+  if (typeof reps !== 'number' || reps < 1) {
+    return res.status(400).json({ message: 'Reps must be a number greater than 0' });
+  }
+  if (typeof weight !== 'number' || weight < 0) {
+    return res.status(400).json({ message: 'Weight must be a non-negative number' });
+  }
+
+  let workout = workouts.find(w => w.date === req.params.date);
+  let exercise;
+
+  if (!workout) {
+    // Scenario 1: New workout
+    workout = {
+      date: req.params.date,
+      name: "Custom workout",
+      exercises: []
+    };
+    workouts.push(workout);
+  }
+
+  exercise = workout.exercises.find(e => e.name.toLowerCase() === req.params.exerciseName.toLowerCase());
+
+  if (!exercise) {
+    // Scenario 2: New exercise in existing workout
+    exercise = {
+      id: (workout.exercises.length + 1).toString(),
+      name: req.params.exerciseName,
+      sets: []
+    };
+    workout.exercises.push(exercise);
+  }
+
+  // Scenario 3: Add new set to existing exercise (also applies to scenarios 1 and 2)
+  const newSet = {
+    id: (exercise.sets.length + 1).toString(),
+    reps,
+    weight
+  };
+  exercise.sets.push(newSet);
+
+  await writeJsonFile(workoutsPath, workouts);
+  res.status(201).json(exercise);
+});
+
 // Recover db
 app.get('/api/recover', async (req, res) => {
   const initialWorkouts = [

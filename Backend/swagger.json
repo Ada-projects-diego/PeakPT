@@ -427,6 +427,73 @@
         }
       }
     },
+    "/workouts/{date}/exercises/byname/{exerciseName}/sets": {
+      "post": {
+        "summary": "Add a new set to an exercise (handles new workout, new exercise, and existing exercise scenarios)",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Date in YYYY-MM-DD format",
+            "example": "2024-09-18"
+          },
+          {
+            "name": "exerciseName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reps": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of repetitions (must be greater than 0)"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Weight (must be non-negative)"
+                  }
+                },
+                "required": ["reps", "weight"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully added new set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletedExercise"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date format, invalid reps, or invalid weight"
+          },
+          "500": {
+            "description": "Error reading or writing workouts"
+          }
+        }
+      }
+    },
     "/recover": {
       "get": {
         "summary": "Recover database to initial state",
