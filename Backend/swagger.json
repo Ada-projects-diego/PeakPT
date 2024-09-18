@@ -292,6 +292,141 @@
         }
       }
     },
+    "/workouts/{date}/exercises/byname/{exerciseName}/sets": {
+      "delete": {
+        "summary": "Delete sets by date, exercise name, and set id(s)",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Date in YYYY-MM-DD format",
+            "example": "2024-09-18"
+          },
+          {
+            "name": "exerciseName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "setIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "description": "Invalid date format or invalid setIds"
+          },
+          "404": {
+            "description": "Workout or exercise not found"
+          },
+          "500": {
+            "description": "Error reading or writing workouts"
+          }
+        }
+      },
+      "put": {
+        "summary": "Bulk update sets by date, exercise name, and set id(s)",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Date in YYYY-MM-DD format",
+            "example": "2024-09-18"
+          },
+          {
+            "name": "exerciseName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "updates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "reps": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Number of repetitions (must be greater than 0)"
+                        },
+                        "weight": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["id"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletedExercise"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date format, invalid updates, or reps less than or equal to 0"
+          },
+          "404": {
+            "description": "Workout or exercise not found"
+          },
+          "500": {
+            "description": "Error reading or writing workouts"
+          }
+        }
+      }
+    },
     "/recover": {
       "get": {
         "summary": "Recover database to initial state",

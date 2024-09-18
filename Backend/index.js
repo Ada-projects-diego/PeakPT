@@ -231,6 +231,88 @@ app.delete('/api/workouts/:date/exercises/:exerciseId/sets', async (req, res) =>
   }
 });
 
+app.delete('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, res) => {
+  const workouts = await readJsonFile(workoutsPath);
+  if (workouts) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    if (workoutIndex !== -1) {
+      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === req.params.exerciseName.toLowerCase());
+      if (exerciseIndex !== -1) {
+        const setIds = req.body.setIds;
+        if (!Array.isArray(setIds) || setIds.length === 0) {
+          return res.status(400).json({ message: 'setIds must be a non-empty array in the request body' });
+        }
+        workouts[workoutIndex].exercises[exerciseIndex].sets = workouts[workoutIndex].exercises[exerciseIndex].sets.filter(set => !setIds.includes(set.id));
+        await writeJsonFile(workoutsPath, workouts);
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
+    } else {
+      res.status(404).json({ message: 'Workout not found' });
+    }
+  } else {
+    res.status(500).json({ message: 'Error reading workouts' });
+  }
+});
+
+// Bulk update sets by date, exercise name, and set id(s)
+app.put('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, res) => {
+  const workouts = await readJsonFile(workoutsPath);
+  if (workouts) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    if (workoutIndex !== -1) {
+      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === req.params.exerciseName.toLowerCase());
+      if (exerciseIndex !== -1) {
+        const updates = req.body.updates;
+        if (!Array.isArray(updates) || updates.length === 0) {
+          return res.status(400).json({ message: 'updates must be a non-empty array in the request body' });
+        }
+        
+        let hasInvalidReps = false;
+        updates.forEach(update => {
+          const setIndex = workouts[workoutIndex].exercises[exerciseIndex].sets.findIndex(set => set.id === update.id);
+          if (setIndex !== -1) {
+            if (update.reps !== undefined) {
+              if (update.reps <= 0) {
+                hasInvalidReps = true;
+                return;
+              }
+              workouts[workoutIndex].exercises[exerciseIndex].sets[setIndex].reps = update.reps;
+            }
+            if (update.weight !== undefined) {
+              workouts[workoutIndex].exercises[exerciseIndex].sets[setIndex].weight = update.weight;
+            }
+          }
+        });
+
+        if (hasInvalidReps) {
+          return res.status(400).json({ message: 'Reps must be greater than 0' });
+        }
+
+        await writeJsonFile(workoutsPath, workouts);
+        res.json(workouts[workoutIndex].exercises[exerciseIndex]);
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
+    } else {
+      res.status(404).json({ message: 'Workout not found' });
+    }
+  } else {
+    res.status(500).json({ message: 'Error reading workouts' });
+  }
+});
+
 // Recover db
 app.get('/api/recover', async (req, res) => {
   const initialWorkouts = [
