@@ -61,6 +61,9 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid date format"
+          },
           "404": {
             "description": "Workout not found"
           },
@@ -104,6 +107,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid date format"
           },
           "404": {
             "description": "Workout or exercise not found"
@@ -186,6 +192,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid date format"
           },
           "404": {
             "description": "Workout or exercise not found"
@@ -425,9 +434,7 @@
             "description": "Error reading or writing workouts"
           }
         }
-      }
-    },
-    "/workouts/{date}/exercises/byname/{exerciseName}/sets": {
+      },
       "post": {
         "summary": "Add a new set to an exercise (handles new workout, new exercise, and existing exercise scenarios)",
         "parameters": [
