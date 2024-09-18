@@ -52,9 +52,13 @@ const ExerciseLogScreen = () => {
   const addExercise = () => {
     navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString().split('T')[0] } as never);
   };
-
+  
   const editExercise = (exercise: CompletedExercise) => {
-    navigation.navigate('ExerciseLogEntryScreen' as never, { exerciseId: exercise.id, date: currentDate.toISOString().split('T')[0] } as never);
+    navigation.navigate('ExerciseLogEntryScreen' as never, { 
+      exerciseId: exercise.id, 
+      exerciseName: exercise.name, 
+      date: currentDate.toISOString().split('T')[0] 
+    } as never);
   };
 
   const initiateDelete = (id: string) => {

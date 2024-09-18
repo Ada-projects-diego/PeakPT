@@ -46,7 +46,11 @@ const ExerciseLibraryScreen = () => {
   const renderExerciseItem = ({ item }: { item: Exercise }) => (
     <TouchableOpacity 
       style={styles.exerciseItem}
-      onPress={() => navigation.navigate('ExerciseLogEntryScreen' as never, { exerciseId: item.id, date: date } as never)}
+      onPress={() => navigation.navigate('ExerciseLogEntryScreen' as never, { 
+        exerciseId: item.id, 
+        exerciseName: item.name, 
+        date: date 
+      } as never)}
     >
       <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
       <Ionicons name="chevron-forward" size={20} color="#808080" />

@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { agent, Set } from '@/api/agent';
 
-type ExerciseSet = {
-  id: string;
-  weight: string;
-  reps: string;
+type RouteParams = {
+  exerciseId: string;
+  exerciseName: string;
+  date: string;
 };
 
 const ExerciseLogEntryScreen = () => {
-  const exerciseName = "Push up";
-  const [weight, setWeight] = useState('2');
-  const [reps, setReps] = useState('10');
-  const [sets, setSets] = useState<ExerciseSet[]>([]);
-  const [selectedSets, setSelectedSets] = useState<Set<string>>(new Set());
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { exerciseId, exerciseName, date } = route.params as RouteParams;
+
+  const [weight, setWeight] = useState('0');
+  const [reps, setReps] = useState('0');
+  const [sets, setSets] = useState<Set[]>([]);
+  const [selectedSets, setSelectedSets] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchExerciseDetails();
+  }, []);
+
+  const fetchExerciseDetails = async () => {
+    try {
+      const exercise = await agent.Workouts.getExerciseByDateAndId(date, exerciseId);
+      setSets(exercise.sets);
+    } catch (error) {
+      console.error('Failed to fetch exercise details:', error);
+    }
+  };
 
   const changeValue = (setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
     const numValue = parseInt(value);
@@ -25,12 +43,16 @@ const ExerciseLogEntryScreen = () => {
     }
   };
 
-  const handleSave = () => {
-    const newSet: ExerciseSet = { id: Date.now().toString(), weight, reps };
-    setSets(prevSets => [...prevSets, newSet]);
-    console.log('API Request:', { exerciseName, set: newSet, action: 'add' });
-    setWeight('2');
-    setReps('10');
+  const handleSave = async () => {
+    try {
+      const newSet = { reps: parseInt(reps), weight: parseFloat(weight) };
+      const updatedExercise = await agent.Workouts.addSet(date, exerciseName, newSet);
+      setSets(updatedExercise.sets);
+      setWeight('0');
+      setReps('0');
+    } catch (error) {
+      console.error('Failed to save set:', error);
+    }
   };
 
   const handleClear = () => {
@@ -47,41 +69,50 @@ const ExerciseLogEntryScreen = () => {
     }
   };
 
-  const handleUpdate = () => {
-    setSets(prevSets =>
-      prevSets.map(set =>
-        selectedSets.has(set.id) ? { ...set, weight, reps } : set
-      )
-    );
-    console.log('API Request:', { exerciseName, sets: Array.from(selectedSets), weight, reps, action: 'update' });
-    setSelectedSets(new Set());
+  const handleUpdate = async () => {
+    try {
+      const updates = selectedSets.map(id => ({
+        id,
+        reps: parseInt(reps),
+        weight: parseFloat(weight)
+      }));
+      const updatedExercise = await agent.Workouts.updateSets(date, exerciseName, updates);
+      setSets(updatedExercise.sets);
+      setSelectedSets([]);
+    } catch (error) {
+      console.error('Failed to update sets:', error);
+    }
   };
 
-  const handleDelete = () => {
-    setSets(prevSets => prevSets.filter(set => !selectedSets.has(set.id)));
-    console.log('API Request:', { exerciseName, sets: Array.from(selectedSets), action: 'delete' });
-    setSelectedSets(new Set());
+  const handleDelete = async () => {
+    try {
+      await agent.Workouts.deleteSets(date, exerciseId, selectedSets);
+      setSets(sets.filter(set => !selectedSets.includes(set.id)));
+      setSelectedSets([]);
+    } catch (error) {
+      console.error('Failed to delete sets:', error);
+    }
   };
 
   const toggleSetSelection = (id: string) => {
     setSelectedSets(prevSelected => {
-      const newSelected = new Set(prevSelected);
-      if (newSelected.has(id)) {
-        newSelected.delete(id);
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter(setId => setId !== id);
       } else {
-        newSelected.add(id);
+        return [...prevSelected, id];
       }
-      return newSelected;
     });
   };
 
-  const renderSet = ({ item, index }: { item: ExerciseSet; index: number }) => (
+
+  const renderSet = ({ item, index }: { item: Set; index: number }) => (
     <TouchableOpacity
       style={[
         styles.setItem,
-        selectedSets.has(item.id) && styles.selectedSetItem
+        selectedSets.includes(item.id) && styles.selectedSetItem
       ]}
       onPress={() => toggleSetSelection(item.id)}
+      key={`${item.id}-${index}`} // Add this line
     >
       <ThemedText style={styles.setText}>
         {index + 1}   {item.weight} kgs   {item.reps} reps
@@ -132,7 +163,7 @@ const ExerciseLogEntryScreen = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        {selectedSets.size > 0 ? (
+        {selectedSets.length > 0 ? (
           <>
             <TouchableOpacity 
               style={[styles.actionButton, styles.updateButton, isActionDisabled && styles.disabledButton]}
@@ -164,7 +195,7 @@ const ExerciseLogEntryScreen = () => {
       <FlatList
         data={sets}
         renderItem={renderSet}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         style={styles.setList}
       />
     </ThemedView>
