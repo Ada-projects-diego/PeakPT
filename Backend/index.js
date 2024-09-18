@@ -58,7 +58,8 @@ app.get('/api/workouts/:date', async (req, res) => {
     if (workout) {
       res.json(workout);
     } else {
-      res.status(404).json({ message: 'Workout not found' });
+      // Return 200 OK with an empty workout object
+      res.json({ date: req.params.date, name: "", exercises: [] });
     }
   } else {
     res.status(500).json({ message: 'Error reading workouts' });

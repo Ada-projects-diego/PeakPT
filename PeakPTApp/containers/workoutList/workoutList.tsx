@@ -20,19 +20,19 @@ export const WorkoutList = () => {
       } catch (error) {
         console.error('Failed to fetch workouts:', error);
       }
-    }; // TODO: move this into it's own file
+    };
   
     fetchWorkouts();
   }, []);
 
   const handleAddWorkout = () => {
-    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
     console.log('Navigating to ExerciseLogScreen for today:', today);
-    navigation.navigate('ExerciseLogScreen' as [never, never], { date: today } as [never, never]);
+    navigation.navigate('ExerciseLogScreen' as never, { date: today } as never);
   };
 
-  const renderWorkoutItem = ({ item: workout }: { item: Workout }) => (
-    <WorkoutItem workout={workout} navigation={navigation} />
+  const renderWorkoutItem = ({ item }: { item: Workout }) => (
+    <WorkoutItem workout={item} navigation={navigation} />
   );
 
   return (
@@ -40,7 +40,7 @@ export const WorkoutList = () => {
       <FlatList
         data={workouts}
         renderItem={renderWorkoutItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.date}
         ListEmptyComponent={
           <ThemedText style={styles.emptyText}>No workouts recorded yet.</ThemedText>
         }
@@ -100,7 +100,7 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
       {isExpanded && (
         <View style={styles.exercisesContainer}>
           {workout.exercises.map((exercise, index) => (
-            <View key={index} style={styles.exerciseItem}>
+            <View key={`${workout.date}-${exercise.name}-${index}`} style={styles.exerciseItem}>
               <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
               <ThemedText style={styles.exerciseDetails}>
                 {renderExerciseDetails(exercise)}

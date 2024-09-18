@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { agent, Exercise } from '@/api/agent';
+import { agent, CompletedExercise } from '@/api/agent';
 
 type RouteParams = {
   date: string;
@@ -15,7 +15,7 @@ const ExerciseLogScreen = () => {
   const route = useRoute();
   const { date: routeDate } = route.params as RouteParams;
   const [currentDate, setCurrentDate] = useState(new Date(routeDate));
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<CompletedExercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -33,8 +33,8 @@ const ExerciseLogScreen = () => {
     setError(null);
     try {
       const dateString = date.toISOString().split('T')[0];
-      const fetchedExercises = await agent.Workouts.getExercisesByDate(dateString);
-      setExercises(fetchedExercises);
+      const workout = await agent.Workouts.details(dateString);
+      setExercises(workout.exercises || []); // Use an empty array if exercises is undefined
     } catch (err) {
       console.error('Failed to fetch exercises:', err);
       setError('Failed to load exercises. Please try again.');
@@ -53,7 +53,7 @@ const ExerciseLogScreen = () => {
     navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString().split('T')[0] } as never);
   };
 
-  const editExercise = (exercise: Exercise) => {
+  const editExercise = (exercise: CompletedExercise) => {
     navigation.navigate('ExerciseLogEntryScreen' as never, { exerciseId: exercise.id, date: currentDate.toISOString().split('T')[0] } as never);
   };
 
@@ -64,7 +64,8 @@ const ExerciseLogScreen = () => {
   const confirmDelete = async () => {
     if (deletingId) {
       try {
-        await agent.Workouts.deleteExercise(currentDate.toISOString().split('T')[0], deletingId);
+        const dateString = currentDate.toISOString().split('T')[0];
+        await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
         setExercises(exercises.filter(exercise => exercise.id !== deletingId));
       } catch (err) {
         console.error('Failed to delete exercise:', err);
@@ -79,7 +80,7 @@ const ExerciseLogScreen = () => {
     setDeletingId(null);
   };
 
-  const renderExercise = ({ item }: { item: Exercise }) => (
+  const renderExercise = ({ item }: { item: CompletedExercise }) => (
     <View style={styles.exerciseContainer}>
       <View style={styles.exerciseHeader}>
         <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
@@ -133,15 +134,14 @@ const ExerciseLogScreen = () => {
         <ActivityIndicator size="large" color="#007AFF" />
       ) : error ? (
         <ThemedText style={styles.errorText}>{error}</ThemedText>
+      ) : exercises.length === 0 ? (
+        <ThemedText style={styles.emptyText}>No exercises recorded for this date.</ThemedText>
       ) : (
         <FlatList
           data={exercises}
           renderItem={renderExercise}
           keyExtractor={(item) => item.id}
           style={styles.exerciseList}
-          ListEmptyComponent={
-            <ThemedText style={styles.emptyText}>No exercises recorded for this date.</ThemedText>
-          }
         />
       )}
 
