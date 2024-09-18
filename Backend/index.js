@@ -34,57 +34,6 @@ async function writeJsonFile(filePath, data) {
   }
 }
 
-// Initial data (for restore endpoint)
-const initialWorkouts = [
-  {
-    id: '1',
-    date: '2024-09-05T00:00:00.000Z',
-    name: 'Upper body workout',
-    exercises: [
-      { id: '1', name: 'Bent Over Row', sets: [{ reps: 5, weight: 43 }, { reps: 5, weight: 43 }, { reps: 5, weight: 43 }] },
-      { id: '2', name: 'Bench Press', sets: [{ reps: 5, weight: 20.5 }, { reps: 5, weight: 20.5 }, { reps: 5, weight: 20.5 }] },
-      { id: '3', name: 'Pull up', sets: [{ reps: 5, weight: 0 }, { reps: 5, weight: 0 }, { reps: 5, weight: 0 }] },
-    ],
-  },
-  {
-    id: '2',
-    date: '2024-09-07T00:00:00.000Z',
-    name: 'Leg day workout',
-    exercises: [
-      { id: '1', name: 'Squats', sets: [{ reps: 8, weight: 70 }, { reps: 8, weight: 70 }, { reps: 8, weight: 70 }, { reps: 8, weight: 70 }] },
-      { id: '2', name: 'Deadlifts', sets: [{ reps: 5, weight: 85 }, { reps: 5, weight: 85 }, { reps: 5, weight: 85 }] },
-    ],
-  },
-  {
-    id: '3',
-    date: '2024-09-09T00:00:00.000Z',
-    name: 'Core workout',
-    exercises: [
-      { id: '1', name: 'Rolling Planks', sets: [{ reps: 1, weight: 0 }, { reps: 1, weight: 0 }, { reps: 1, weight: 0 }] },
-      { id: '2', name: 'Russian Twists', sets: [{ reps: 20, weight: 5 }, { reps: 20, weight: 5 }, { reps: 20, weight: 5 }] },
-    ],
-  },
-];
-
-const initialExercises = [
-  { id: '1', name: 'Squat' },
-  { id: '2', name: 'Deadlift' },
-  { id: '3', name: 'Bench Press' },
-  { id: '4', name: 'Overhead Press' },
-  { id: '5', name: 'Barbell Row' },
-];
-
-// Restore endpoint
-app.get('/api/restore', async (req, res) => {
-  try {
-    await writeJsonFile(workoutsPath, initialWorkouts);
-    await writeJsonFile(exercisesPath, initialExercises);
-    res.status(200).json({ message: 'Database restored successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error restoring database', error: error.message });
-  }
-});
-
 // GET all workouts
 app.get('/api/workouts', async (req, res) => {
   const workouts = await readJsonFile(workoutsPath);
@@ -95,11 +44,17 @@ app.get('/api/workouts', async (req, res) => {
   }
 });
 
-// GET a specific workout
-app.get('/api/workouts/:id', async (req, res) => {
+// GET workout by date
+app.get('/api/workouts/:date', async (req, res) => {
   const workouts = await readJsonFile(workoutsPath);
   if (workouts) {
-    const workout = workouts.find(w => w.id === req.params.id);
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+    
+    const workout = workouts.find(w => w.date === req.params.date);
     if (workout) {
       res.json(workout);
     } else {
@@ -110,108 +65,47 @@ app.get('/api/workouts/:id', async (req, res) => {
   }
 });
 
-// POST a new workout
-app.post('/api/workouts', async (req, res) => {
+// GET completed exercise by date and exercise name
+app.get('/api/workouts/:date/exercises', async (req, res) => {
   const workouts = await readJsonFile(workoutsPath);
   if (workouts) {
-    const newWorkout = {
-      id: (workouts.length + 1).toString(),
-      ...req.body,
-    };
-    workouts.push(newWorkout);
-    await writeJsonFile(workoutsPath, workouts);
-    res.status(201).json(newWorkout);
-  } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
-  }
-});
-
-// PUT (update) a workout
-app.put('/api/workouts/:id', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const index = workouts.findIndex(w => w.id === req.params.id);
-    if (index !== -1) {
-      workouts[index] = { ...workouts[index], ...req.body };
-      await writeJsonFile(workoutsPath, workouts);
-      res.json(workouts[index]);
-    } else {
-      res.status(404).json({ message: 'Workout not found' });
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
-  } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
-  }
-});
 
-// DELETE a workout
-app.delete('/api/workouts/:id', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const index = workouts.findIndex(w => w.id === req.params.id);
-    if (index !== -1) {
-      workouts.splice(index, 1);
-      await writeJsonFile(workoutsPath, workouts);
-      res.status(204).send();
-    } else {
-      res.status(404).json({ message: 'Workout not found' });
-    }
-  } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
-  }
-});
-
-// GET exercises for a specific date
-app.get('/api/workouts/date/:date', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const workout = workouts.find(w => w.date.startsWith(req.params.date));
+    const workout = workouts.find(w => w.date === req.params.date);
     if (workout) {
-      res.json(workout.exercises);
+      const exercise = workout.exercises.find(e => e.name.toLowerCase() === req.query.name.toLowerCase());
+      if (exercise) {
+        res.json(exercise);
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
     } else {
-      res.json([]);
+      res.status(404).json({ message: 'Workout not found' });
     }
   } else {
     res.status(500).json({ message: 'Error reading workouts' });
   }
 });
 
-// POST a new exercise for a specific date
-app.post('/api/workouts/date/:date/exercises', async (req, res) => {
+// GET completed exercise by date and exercise id
+app.get('/api/workouts/:date/exercises/:exerciseId', async (req, res) => {
   const workouts = await readJsonFile(workoutsPath);
   if (workouts) {
-    let workout = workouts.find(w => w.date.startsWith(req.params.date));
-    if (!workout) {
-      workout = {
-        id: (workouts.length + 1).toString(),
-        date: `${req.params.date}T00:00:00.000Z`,
-        name: 'Workout',
-        exercises: [],
-      };
-      workouts.push(workout);
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
-    const newExercise = {
-      id: (workout.exercises.length + 1).toString(),
-      ...req.body,
-    };
-    workout.exercises.push(newExercise);
-    await writeJsonFile(workoutsPath, workouts);
-    res.status(201).json(newExercise);
-  } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
-  }
-});
 
-// PUT (update) an exercise for a specific date
-app.put('/api/workouts/date/:date/exercises/:exerciseId', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const workout = workouts.find(w => w.date.startsWith(req.params.date));
+    const workout = workouts.find(w => w.date === req.params.date);
     if (workout) {
-      const exerciseIndex = workout.exercises.findIndex(e => e.id === req.params.exerciseId);
-      if (exerciseIndex !== -1) {
-        workout.exercises[exerciseIndex] = { ...workout.exercises[exerciseIndex], ...req.body };
-        await writeJsonFile(workoutsPath, workouts);
-        res.json(workout.exercises[exerciseIndex]);
+      const exercise = workout.exercises.find(e => e.id === req.params.exerciseId);
+      if (exercise) {
+        res.json(exercise);
       } else {
         res.status(404).json({ message: 'Exercise not found' });
       }
@@ -219,29 +113,7 @@ app.put('/api/workouts/date/:date/exercises/:exerciseId', async (req, res) => {
       res.status(404).json({ message: 'Workout not found' });
     }
   } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
-  }
-});
-
-// DELETE an exercise for a specific date
-app.delete('/api/workouts/date/:date/exercises/:exerciseId', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const workout = workouts.find(w => w.date.startsWith(req.params.date));
-    if (workout) {
-      const exerciseIndex = workout.exercises.findIndex(e => e.id === req.params.exerciseId);
-      if (exerciseIndex !== -1) {
-        workout.exercises.splice(exerciseIndex, 1);
-        await writeJsonFile(workoutsPath, workouts);
-        res.status(204).send();
-      } else {
-        res.status(404).json({ message: 'Exercise not found' });
-      }
-    } else {
-      res.status(404).json({ message: 'Workout not found' });
-    }
-  } else {
-    res.status(500).json({ message: 'Error reading or writing workouts' });
+    res.status(500).json({ message: 'Error reading workouts' });
   }
 });
 
@@ -255,7 +127,7 @@ app.get('/api/exercises', async (req, res) => {
   }
 });
 
-// GET a specific exercise
+// GET exercise by id
 app.get('/api/exercises/:id', async (req, res) => {
   const exercises = await readJsonFile(exercisesPath);
   if (exercises) {
@@ -267,6 +139,278 @@ app.get('/api/exercises/:id', async (req, res) => {
     }
   } else {
     res.status(500).json({ message: 'Error reading exercises' });
+  }
+});
+
+// DELETE completed exercise by date and exercise id
+app.delete('/api/workouts/:date/exercises/:exerciseId', async (req, res) => {
+  const workouts = await readJsonFile(workoutsPath);
+  if (workouts) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    if (workoutIndex !== -1) {
+      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.id === req.params.exerciseId);
+      if (exerciseIndex !== -1) {
+        workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+        await writeJsonFile(workoutsPath, workouts);
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
+    } else {
+      res.status(404).json({ message: 'Workout not found' });
+    }
+  } else {
+    res.status(500).json({ message: 'Error reading workouts' });
+  }
+});
+
+// DELETE completed exercise by date and exercise name
+app.delete('/api/workouts/:date/exercises', async (req, res) => {
+  const workouts = await readJsonFile(workoutsPath);
+  if (workouts) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    if (workoutIndex !== -1) {
+      const exerciseName = req.query.name;
+      if (!exerciseName) {
+        return res.status(400).json({ message: 'Exercise name is required in query parameter' });
+      }
+      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+      if (exerciseIndex !== -1) {
+        workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+        await writeJsonFile(workoutsPath, workouts);
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
+    } else {
+      res.status(404).json({ message: 'Workout not found' });
+    }
+  } else {
+    res.status(500).json({ message: 'Error reading workouts' });
+  }
+});
+
+// DELETE sets by date, exercise id, and set id(s)
+app.delete('/api/workouts/:date/exercises/:exerciseId/sets', async (req, res) => {
+  const workouts = await readJsonFile(workoutsPath);
+  if (workouts) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.params.date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    if (workoutIndex !== -1) {
+      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.id === req.params.exerciseId);
+      if (exerciseIndex !== -1) {
+        const setIds = req.body.setIds;
+        if (!Array.isArray(setIds) || setIds.length === 0) {
+          return res.status(400).json({ message: 'setIds must be a non-empty array in the request body' });
+        }
+        workouts[workoutIndex].exercises[exerciseIndex].sets = workouts[workoutIndex].exercises[exerciseIndex].sets.filter(set => !setIds.includes(set.id));
+        await writeJsonFile(workoutsPath, workouts);
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: 'Exercise not found' });
+      }
+    } else {
+      res.status(404).json({ message: 'Workout not found' });
+    }
+  } else {
+    res.status(500).json({ message: 'Error reading workouts' });
+  }
+});
+
+// Recover db
+app.get('/api/recover', async (req, res) => {
+  const initialWorkouts = [
+    {
+      "date": "2024-09-05",
+      "name": "Upper body workout",
+      "exercises": [
+        {
+          "id": "1",
+          "name": "Bent Over Row",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 5,
+              "weight": 43
+            },
+            {
+              "id": "2",
+              "reps": 5,
+              "weight": 43
+            },
+            {
+              "id": "3",
+              "reps": 5,
+              "weight": 43
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "Bench Press",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 5,
+              "weight": 20.5
+            },
+            {
+              "id": "2",
+              "reps": 5,
+              "weight": 20.5
+            },
+            {
+              "id": "3",
+              "reps": 5,
+              "weight": 20.5
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "Pull up",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 5,
+              "weight": 0
+            },
+            {
+              "id": "2",
+              "reps": 5,
+              "weight": 0
+            },
+            {
+              "id": "3",
+              "reps": 5,
+              "weight": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2024-09-07",
+      "name": "Leg day workout",
+      "exercises": [
+        {
+          "id": "1",
+          "name": "Squats",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 8,
+              "weight": 70
+            },
+            {
+              "id": "2",
+              "reps": 8,
+              "weight": 70
+            },
+            {
+              "id": "3",
+              "reps": 8,
+              "weight": 70
+            },
+            {
+              "id": "4",
+              "reps": 8,
+              "weight": 70
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "Deadlifts",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 5,
+              "weight": 85
+            },
+            {
+              "id": "2",
+              "reps": 5,
+              "weight": 85
+            },
+            {
+              "id": "3",
+              "reps": 5,
+              "weight": 85
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2024-09-09",
+      "name": "Core workout",
+      "exercises": [
+        {
+          "id": "1",
+          "name": "Rolling Planks",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 1,
+              "weight": 0
+            },
+            {
+              "id": "2",
+              "reps": 1,
+              "weight": 0
+            },
+            {
+              "id": "3",
+              "reps": 1,
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "Russian Twists",
+          "sets": [
+            {
+              "id": "1",
+              "reps": 20,
+              "weight": 5
+            },
+            {
+              "id": "2",
+              "reps": 20,
+              "weight": 5
+            },
+            {
+              "id": "3",
+              "reps": 20,
+              "weight": 5
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  try {
+    await writeJsonFile(workoutsPath, initialWorkouts);
+    res.status(200).json({ message: 'Database recovered successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error recovering database', error: error.message });
   }
 });
 
