@@ -145,150 +145,250 @@ app.get('/api/exercises/:id', async (req, res) => {
 
 // DELETE completed exercise by date and exercise id
 app.delete('/api/workouts/:date/exercises/:exerciseId', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
+  console.log('DELETE request received for /api/workouts/:date/exercises/:exerciseId');
+  console.log('Params:', req.params);
+
+  let workouts = await readJsonFile(workoutsPath);
   if (workouts) {
+    console.log('Workouts loaded successfully');
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(req.params.date)) {
+      console.log('Invalid date format:', req.params.date);
       return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
 
     const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    console.log('Workout index:', workoutIndex);
+
     if (workoutIndex !== -1) {
       const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.id === req.params.exerciseId);
+      console.log('Exercise index:', exerciseIndex);
+
       if (exerciseIndex !== -1) {
         workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+        console.log('Exercise removed');
+
+        // Check if this was the last exercise in the workout
+        if (workouts[workoutIndex].exercises.length === 0) {
+          console.log('Last exercise removed, deleting entire workout');
+          workouts.splice(workoutIndex, 1);
+        }
+
+        console.log('Writing updated workouts to file');
         await writeJsonFile(workoutsPath, workouts);
+        
+        console.log('Operation completed successfully');
         res.status(204).send();
       } else {
+        console.log('Exercise not found');
         res.status(404).json({ message: 'Exercise not found' });
       }
     } else {
+      console.log('Workout not found');
       res.status(404).json({ message: 'Workout not found' });
     }
   } else {
+    console.error('Error reading workouts');
     res.status(500).json({ message: 'Error reading workouts' });
   }
 });
 
 // DELETE completed exercise by date and exercise name
 app.delete('/api/workouts/:date/exercises', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
+  console.log('DELETE request received for /api/workouts/:date/exercises');
+  console.log('Params:', req.params);
+  console.log('Query:', req.query);
+
+  let workouts = await readJsonFile(workoutsPath);
   if (workouts) {
+    console.log('Workouts loaded successfully');
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(req.params.date)) {
+      console.log('Invalid date format:', req.params.date);
       return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
 
     const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    console.log('Workout index:', workoutIndex);
+
     if (workoutIndex !== -1) {
       const exerciseName = req.query.name;
       if (!exerciseName) {
+        console.log('Exercise name not provided');
         return res.status(400).json({ message: 'Exercise name is required in query parameter' });
       }
+      console.log('Exercise name:', exerciseName);
+
       const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+      console.log('Exercise index:', exerciseIndex);
+
       if (exerciseIndex !== -1) {
         workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+        console.log('Exercise removed');
+
+        // Check if this was the last exercise in the workout
+        if (workouts[workoutIndex].exercises.length === 0) {
+          console.log('Last exercise removed, deleting entire workout');
+          workouts.splice(workoutIndex, 1);
+        }
+
+        console.log('Writing updated workouts to file');
         await writeJsonFile(workoutsPath, workouts);
+        
+        console.log('Operation completed successfully');
         res.status(204).send();
       } else {
+        console.log('Exercise not found');
         res.status(404).json({ message: 'Exercise not found' });
       }
     } else {
+      console.log('Workout not found');
       res.status(404).json({ message: 'Workout not found' });
     }
   } else {
+    console.error('Error reading workouts');
     res.status(500).json({ message: 'Error reading workouts' });
   }
 });
 
 // DELETE sets by date, exercise id, and set id(s)
 app.delete('/api/workouts/:date/exercises/:exerciseId/sets', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
+  console.log('DELETE request received for /api/workouts/:date/exercises/:exerciseId/sets');
+  console.log('Params:', req.params);
+  console.log('Body:', req.body);
+
+  let workouts = await readJsonFile(workoutsPath);
   if (workouts) {
+    console.log('Workouts loaded successfully');
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(req.params.date)) {
+      console.log('Invalid date format:', req.params.date);
       return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
 
     const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    console.log('Workout index:', workoutIndex);
+
     if (workoutIndex !== -1) {
       const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.id === req.params.exerciseId);
+      console.log('Exercise index:', exerciseIndex);
+
       if (exerciseIndex !== -1) {
         const setIds = req.body.setIds;
+        console.log('Set IDs to delete:', setIds);
+
         if (!Array.isArray(setIds) || setIds.length === 0) {
+          console.log('Invalid setIds:', setIds);
           return res.status(400).json({ message: 'setIds must be a non-empty array in the request body' });
         }
+
+        const originalSetCount = workouts[workoutIndex].exercises[exerciseIndex].sets.length;
+        console.log('Original set count:', originalSetCount);
+
         workouts[workoutIndex].exercises[exerciseIndex].sets = workouts[workoutIndex].exercises[exerciseIndex].sets.filter(set => !setIds.includes(set.id));
+        
+        const newSetCount = workouts[workoutIndex].exercises[exerciseIndex].sets.length;
+        console.log('New set count:', newSetCount);
+
+        if (newSetCount === 0) {
+          console.log('All sets deleted, removing exercise');
+          workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+
+          // Check if this was the last exercise in the workout
+          if (workouts[workoutIndex].exercises.length === 0) {
+            console.log('Last exercise removed, deleting entire workout');
+            workouts.splice(workoutIndex, 1);
+          }
+        }
+
+        console.log('Writing updated workouts to file');
         await writeJsonFile(workoutsPath, workouts);
+        
+        console.log('Operation completed successfully');
         res.status(204).send();
       } else {
+        console.log('Exercise not found');
         res.status(404).json({ message: 'Exercise not found' });
       }
     } else {
+      console.log('Workout not found');
       res.status(404).json({ message: 'Workout not found' });
     }
   } else {
-    res.status(500).json({ message: 'Error reading workouts' });
-  }
-});
-
-app.delete('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
-  if (workouts) {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(req.params.date)) {
-      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
-    }
-
-    const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
-    if (workoutIndex !== -1) {
-      const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === req.params.exerciseName.toLowerCase());
-      if (exerciseIndex !== -1) {
-        const setIds = req.body.setIds;
-        if (!Array.isArray(setIds) || setIds.length === 0) {
-          return res.status(400).json({ message: 'setIds must be a non-empty array in the request body' });
-        }
-        workouts[workoutIndex].exercises[exerciseIndex].sets = workouts[workoutIndex].exercises[exerciseIndex].sets.filter(set => !setIds.includes(set.id));
-        await writeJsonFile(workoutsPath, workouts);
-        res.status(204).send();
-      } else {
-        res.status(404).json({ message: 'Exercise not found' });
-      }
-    } else {
-      res.status(404).json({ message: 'Workout not found' });
-    }
-  } else {
+    console.error('Error reading workouts');
     res.status(500).json({ message: 'Error reading workouts' });
   }
 });
 
 // DELETE sets by date, exercise name, and set id(s)
 app.delete('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, res) => {
-  const workouts = await readJsonFile(workoutsPath);
+  console.log('DELETE request received for /api/workouts/:date/exercises/byname/:exerciseName/sets');
+  console.log('Params:', req.params);
+  console.log('Body:', req.body);
+
+  let workouts = await readJsonFile(workoutsPath);
   if (workouts) {
+    console.log('Workouts loaded successfully');
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(req.params.date)) {
+      console.log('Invalid date format:', req.params.date);
       return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
     }
 
     const workoutIndex = workouts.findIndex(w => w.date === req.params.date);
+    console.log('Workout index:', workoutIndex);
+
     if (workoutIndex !== -1) {
       const exerciseIndex = workouts[workoutIndex].exercises.findIndex(e => e.name.toLowerCase() === req.params.exerciseName.toLowerCase());
+      console.log('Exercise index:', exerciseIndex);
+
       if (exerciseIndex !== -1) {
         const setIds = req.body.setIds;
+        console.log('Set IDs to delete:', setIds);
+
         if (!Array.isArray(setIds) || setIds.length === 0) {
+          console.log('Invalid setIds:', setIds);
           return res.status(400).json({ message: 'setIds must be a non-empty array in the request body' });
         }
+
+        const originalSetCount = workouts[workoutIndex].exercises[exerciseIndex].sets.length;
+        console.log('Original set count:', originalSetCount);
+
         workouts[workoutIndex].exercises[exerciseIndex].sets = workouts[workoutIndex].exercises[exerciseIndex].sets.filter(set => !setIds.includes(set.id));
+        
+        const newSetCount = workouts[workoutIndex].exercises[exerciseIndex].sets.length;
+        console.log('New set count:', newSetCount);
+
+        if (newSetCount === 0) {
+          console.log('All sets deleted, removing exercise');
+          workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+
+          // Check if this was the last exercise in the workout
+          if (workouts[workoutIndex].exercises.length === 0) {
+            console.log('Last exercise removed, deleting entire workout');
+            workouts.splice(workoutIndex, 1);
+          }
+        }
+
+        console.log('Writing updated workouts to file');
         await writeJsonFile(workoutsPath, workouts);
+        
+        console.log('Operation completed successfully');
         res.status(204).send();
       } else {
+        console.log('Exercise not found');
         res.status(404).json({ message: 'Exercise not found' });
       }
     } else {
+      console.log('Workout not found');
       res.status(404).json({ message: 'Workout not found' });
     }
   } else {
+    console.error('Error reading workouts');
     res.status(500).json({ message: 'Error reading workouts' });
   }
 });
