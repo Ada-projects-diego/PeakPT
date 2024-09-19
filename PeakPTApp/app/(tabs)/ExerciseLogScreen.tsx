@@ -114,7 +114,7 @@ const ExerciseLogScreen = () => {
         <View key={index} style={styles.setContainer}>
           <ThemedText style={styles.setText}>Set {index + 1}:</ThemedText>
           <ThemedText style={styles.setText}>{set.reps} reps</ThemedText>
-          <ThemedText style={styles.setText}>{set.weight} lbs</ThemedText>
+          <ThemedText style={styles.setText}>{set.weight} kg</ThemedText>
         </View>
       ))}
     </View>
