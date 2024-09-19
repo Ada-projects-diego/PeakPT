@@ -4,7 +4,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { agent, Workout, Exercise } from '@/api/agent';
+import { agent, Workout, CompletedExercise } from '@/api/agent';
 
 export const WorkoutList = () => {
   const navigation = useNavigation();
@@ -68,10 +68,32 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
     navigation.navigate('ExerciseLogScreen' as never, { date: workout.date } as never);
   };
 
-  const renderExerciseDetails = (exercise: Exercise) => {
-    const totalSets = exercise.sets.length;
-    const lastSet = exercise.sets[totalSets - 1];
-    return `${totalSets} x ${lastSet.reps} @ ${lastSet.weight} kg`;
+  const renderExerciseDetails = (exercise: CompletedExercise) => {
+    const setGroups = exercise.sets.reduce((acc, set) => {
+      const key = `${set.reps}@${set.weight}`;
+      if (!acc[key]) {
+        acc[key] = { reps: set.reps, weight: set.weight, count: 1 };
+      } else {
+        acc[key].count++;
+      }
+      return acc;
+    }, {} as { [key: string]: { reps: number; weight: number; count: number } });
+
+    const details = Object.values(setGroups).map(group => 
+      `${group.count}x${group.reps} @ ${group.weight}kg`
+    );
+
+    return details.length > 0 ? (
+      <View>
+        {details.map((detail, index) => (
+          <ThemedText key={index} style={styles.exerciseDetailLine}>
+            {detail}
+          </ThemedText>
+        ))}
+      </View>
+    ) : (
+      <ThemedText style={styles.exerciseDetailLine}>No sets recorded</ThemedText>
+    );
   };
 
   return (
@@ -102,9 +124,7 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
           {workout.exercises.map((exercise, index) => (
             <View key={`${workout.date}-${exercise.name}-${index}`} style={styles.exerciseItem}>
               <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
-              <ThemedText style={styles.exerciseDetails}>
-                {renderExerciseDetails(exercise)}
-              </ThemedText>
+              {renderExerciseDetails(exercise)}
             </View>
           ))}
         </View>
@@ -188,5 +208,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  exerciseDetailLine: {
+    fontSize: 14,
+    color: '#B0B0B0',
+    marginTop: 2,
   },
 });
