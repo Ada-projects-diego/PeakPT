@@ -1,0 +1,172 @@
+[
+  {
+    "date": "2024-09-05",
+    "name": "Upper body workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Bent Over Row",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 5,
+            "weight": 43
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 5,
+            "weight": 43
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 5,
+            "weight": 43
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Bench Press",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 5,
+            "weight": 20.5
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 5,
+            "weight": 20.5
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 5,
+            "weight": 20.5
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "name": "Pull up",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 5,
+            "weight": 0
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 5,
+            "weight": 0
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 5,
+            "weight": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2024-09-07",
+    "name": "Leg day workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Squats",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 8,
+            "weight": 70
+          },
+          {
+            "id": "pVLVJW01Pi",
+            "reps": 8,
+            "weight": 70
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Deadlifts",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 5,
+            "weight": 85
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 5,
+            "weight": 85
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 5,
+            "weight": 85
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2024-09-09",
+    "name": "Core workout",
+    "exercises": [
+      {
+        "id": "1",
+        "name": "Rolling Planks",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 1,
+            "weight": 0
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 1,
+            "weight": 0
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 1,
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Russian Twists",
+        "sets": [
+          {
+            "id": "f0Q1cKINdD",
+            "reps": 20,
+            "weight": 5
+          },
+          {
+            "id": "N2p3mogb9n",
+            "reps": 20,
+            "weight": 5
+          },
+          {
+            "id": "Q87ulZ8YZq",
+            "reps": 20,
+            "weight": 5
+          }
+        ]
+      }
+    ]
+  }
+]

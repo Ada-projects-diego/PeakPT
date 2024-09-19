@@ -1,73 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, FlatList, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-
-type Exercise = {
-  name: string;
-  sets: number;
-  reps: number;
-  weight: number;
-};
-
-type Workout = {
-  id: string;
-  date: Date;
-  name: string;
-  exercises: Exercise[];
-};
-
-// Updated dummy data
-const dummyWorkouts: Workout[] = [
-  {
-    id: '1',
-    date: new Date(2024, 7, 15), // Month is 0-indexed
-    name: 'Upper body workout',
-    exercises: [
-      { name: 'Bent Over Row', sets: 3, reps: 5, weight: 43 },
-      { name: 'Bench Press', sets: 3, reps: 5, weight: 20.5 },
-      { name: 'Pull up', sets: 3, reps: 5, weight: 0 },
-    ],
-  },
-  {
-    id: '2',
-    date: new Date(2024, 7, 17), // Month is 0-indexed
-    name: 'Leg day workout',
-    exercises: [
-      { name: 'Squats', sets: 4, reps: 8, weight: 70 },
-      { name: 'Deadlifts', sets: 3, reps: 5, weight: 85 },
-    ],
-  },
-  {
-    id: '3',
-    date: new Date(2024, 7, 19), // Month is 0-indexed
-    name: 'Core workout',
-    exercises: [
-      { name: 'Rolling Planks', sets: 3, reps: 1, weight: 0},
-      { name: 'Russian Twists', sets: 3, reps: 20, weight: 5 },
-    ],
-  },
-];
+import { agent, Workout, CompletedExercise } from '@/api/agent';
 
 export const WorkoutList = () => {
   const navigation = useNavigation();
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        console.log('Fetching workouts...');
+        const fetchedWorkouts = await agent.Workouts.list();
+        console.log('Fetched workouts:', JSON.stringify(fetchedWorkouts, null, 2));
+        setWorkouts(fetchedWorkouts);
+      } catch (error) {
+        console.error('Failed to fetch workouts:', error);
+      }
+    };
+  
+    fetchWorkouts();
+  }, []);
 
   const handleAddWorkout = () => {
-    navigation.navigate('ExerciseLogScreen' as never, { date: new Date().toISOString() } as never);
+    const today = new Date().toISOString().split('T')[0];
+    console.log('Navigating to ExerciseLogScreen for today:', today);
+    navigation.navigate('ExerciseLogScreen' as never, { date: today } as never);
   };
 
-  const renderWorkoutItem = ({ item: workout }: { item: Workout }) => (
-    <WorkoutItem workout={workout} navigation={navigation} />
+  const renderWorkoutItem = ({ item }: { item: Workout }) => (
+    <WorkoutItem workout={item} navigation={navigation} />
   );
 
   return (
     <ThemedView style={styles.container}>
       <FlatList
-        data={dummyWorkouts}
+        data={workouts}
         renderItem={renderWorkoutItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.date}
         ListEmptyComponent={
           <ThemedText style={styles.emptyText}>No workouts recorded yet.</ThemedText>
         }
@@ -85,12 +58,42 @@ export const WorkoutList = () => {
 const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: any }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const navigateToExerciseLog = () => {
-    navigation.navigate('ExerciseLogScreen' as never, { date: workout.date.toISOString() } as never);
+    console.log('Navigating to ExerciseLogScreen for date:', workout.date);
+    navigation.navigate('ExerciseLogScreen' as never, { date: workout.date } as never);
+  };
+
+  const renderExerciseDetails = (exercise: CompletedExercise) => {
+    const setGroups = exercise.sets.reduce((acc, set) => {
+      const key = `${set.reps}@${set.weight}`;
+      if (!acc[key]) {
+        acc[key] = { reps: set.reps, weight: set.weight, count: 1 };
+      } else {
+        acc[key].count++;
+      }
+      return acc;
+    }, {} as { [key: string]: { reps: number; weight: number; count: number } });
+
+    const details = Object.values(setGroups).map(group => 
+      `${group.count}x${group.reps} @ ${group.weight}kg`
+    );
+
+    return details.length > 0 ? (
+      <View>
+        {details.map((detail, index) => (
+          <ThemedText key={index} style={styles.exerciseDetailLine}>
+            {detail}
+          </ThemedText>
+        ))}
+      </View>
+    ) : (
+      <ThemedText style={styles.exerciseDetailLine}>No sets recorded</ThemedText>
+    );
   };
 
   return (
@@ -119,11 +122,9 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
       {isExpanded && (
         <View style={styles.exercisesContainer}>
           {workout.exercises.map((exercise, index) => (
-            <View key={index} style={styles.exerciseItem}>
+            <View key={`${workout.date}-${exercise.name}-${index}`} style={styles.exerciseItem}>
               <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
-              <ThemedText style={styles.exerciseDetails}>
-                {exercise.sets} x {exercise.reps} @ {exercise.weight} kg
-              </ThemedText>
+              {renderExerciseDetails(exercise)}
             </View>
           ))}
         </View>
@@ -207,5 +208,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  exerciseDetailLine: {
+    fontSize: 14,
+    color: '#B0B0B0',
+    marginTop: 2,
   },
 });

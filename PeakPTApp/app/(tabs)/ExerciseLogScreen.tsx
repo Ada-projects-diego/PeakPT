@@ -1,63 +1,82 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { agent, CompletedExercise } from '@/api/agent';
 
-type Exercise = {
-  id: string;
-  name: string;
-  sets: Array<{ reps: number; weight: number }>;
+type RouteParams = {
+  date: string;
 };
 
 const ExerciseLogScreen = () => {
   const navigation = useNavigation();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [exercises, setExercises] = useState<Exercise[]>([
-    {
-      id: '1',
-      name: 'Bench Press',
-      sets: [
-        { reps: 10, weight: 135 },
-        { reps: 8, weight: 155 },
-        { reps: 6, weight: 175 },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Squats',
-      sets: [
-        { reps: 12, weight: 185 },
-        { reps: 10, weight: 205 },
-        { reps: 8, weight: 225 },
-      ],
-    },
-  ]);
+  const route = useRoute();
+  const { date: routeDate } = route.params as RouteParams;
+  const [currentDate, setCurrentDate] = useState(new Date(routeDate));
+  const [exercises, setExercises] = useState<CompletedExercise[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentDate(new Date(routeDate));
+  }, [routeDate]);
+
+  useEffect(() => {
+    fetchExercisesForDate(currentDate);
+  }, [currentDate]);
+
+  const fetchExercisesForDate = async (date: Date) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const dateString = date.toISOString().split('T')[0];
+      const workout = await agent.Workouts.details(dateString);
+      setExercises(workout.exercises || []); // Use an empty array if exercises is undefined
+    } catch (err) {
+      console.error('Failed to fetch exercises:', err);
+      setError('Failed to load exercises. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    setCurrentDate(newDate);
+    navigation.setParams({ date: newDate.toISOString() } as never);
   };
 
   const addExercise = () => {
-    navigation.navigate('ExerciseLibraryScreen' as never);
+    navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString().split('T')[0] } as never);
   };
-
-  const editExercise = (exercise: Exercise) => {
-    navigation.navigate('ExerciseLogEntryScreen' as never, { exercise } as never);
+  
+  const editExercise = (exercise: CompletedExercise) => {
+    navigation.navigate('ExerciseLogEntryScreen' as never, { 
+      exerciseId: exercise.id, 
+      exerciseName: exercise.name, 
+      date: currentDate.toISOString().split('T')[0] 
+    } as never);
   };
 
   const initiateDelete = (id: string) => {
     setDeletingId(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingId) {
-      setExercises(exercises.filter(exercise => exercise.id !== deletingId));
-      setDeletingId(null);
+      try {
+        const dateString = currentDate.toISOString().split('T')[0];
+        await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
+        setExercises(exercises.filter(exercise => exercise.id !== deletingId));
+      } catch (err) {
+        console.error('Failed to delete exercise:', err);
+        setError('Failed to delete exercise. Please try again.');
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -65,7 +84,7 @@ const ExerciseLogScreen = () => {
     setDeletingId(null);
   };
 
-  const renderExercise = ({ item }: { item: Exercise }) => (
+  const renderExercise = ({ item }: { item: CompletedExercise }) => (
     <View style={styles.exerciseContainer}>
       <View style={styles.exerciseHeader}>
         <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
@@ -95,7 +114,7 @@ const ExerciseLogScreen = () => {
         <View key={index} style={styles.setContainer}>
           <ThemedText style={styles.setText}>Set {index + 1}:</ThemedText>
           <ThemedText style={styles.setText}>{set.reps} reps</ThemedText>
-          <ThemedText style={styles.setText}>{set.weight} lbs</ThemedText>
+          <ThemedText style={styles.setText}>{set.weight} kg</ThemedText>
         </View>
       ))}
     </View>
@@ -115,12 +134,20 @@ const ExerciseLogScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={exercises}
-        renderItem={renderExercise}
-        keyExtractor={(item) => item.id}
-        style={styles.exerciseList}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : error ? (
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+      ) : exercises.length === 0 ? (
+        <ThemedText style={styles.emptyText}>No exercises recorded for this date.</ThemedText>
+      ) : (
+        <FlatList
+          data={exercises}
+          renderItem={renderExercise}
+          keyExtractor={(item) => item.id}
+          style={styles.exerciseList}
+        />
+      )}
 
       <TouchableOpacity style={styles.addButton} onPress={addExercise}>
         <Ionicons name="add" size={30} color="#FFFFFF" />
@@ -196,6 +223,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  errorText: {
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  emptyText: {
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
