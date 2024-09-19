@@ -1,3 +1,4 @@
+let nanoid;
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
@@ -6,6 +7,14 @@ const swaggerRouter = require('./swagger');
 
 const app = express();
 const port = 3000;
+
+(async () => {
+  const { nanoid: importedNanoid } = await import('nanoid');
+  nanoid = importedNanoid;
+  app.listen(port, () => {
+    console.log(`Mock API server running at http://localhost:${port}`);
+  });
+})();
 
 app.use(cors());
 app.use(express.json());
@@ -492,7 +501,7 @@ app.post('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, 
 
   // Scenario 3: Add new set to existing exercise (also applies to scenarios 1 and 2)
   const newSet = {
-    id: (exercise.sets.length + 1).toString(),
+    id: nanoid(10),
     reps,
     weight
   };
@@ -502,7 +511,6 @@ app.post('/api/workouts/:date/exercises/byname/:exerciseName/sets', async (req, 
   res.status(201).json(exercise);
 });
 
-// Recover db
 app.get('/api/recover', async (req, res) => {
   const initialWorkouts = [
     {
@@ -514,17 +522,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Bent Over Row",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 5,
               "weight": 43
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 5,
               "weight": 43
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 5,
               "weight": 43
             }
@@ -535,17 +543,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Bench Press",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 5,
               "weight": 20.5
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 5,
               "weight": 20.5
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 5,
               "weight": 20.5
             }
@@ -556,17 +564,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Pull up",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 5,
               "weight": 0
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 5,
               "weight": 0
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 5,
               "weight": 0
             }
@@ -583,22 +591,22 @@ app.get('/api/recover', async (req, res) => {
           "name": "Squats",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 8,
               "weight": 70
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 8,
               "weight": 70
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 8,
               "weight": 70
             },
             {
-              "id": "4",
+              "id": "pVLVJW01Pi", 
               "reps": 8,
               "weight": 70
             }
@@ -609,17 +617,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Deadlifts",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 5,
               "weight": 85
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 5,
               "weight": 85
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 5,
               "weight": 85
             }
@@ -636,17 +644,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Rolling Planks",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 1,
               "weight": 0
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 1,
               "weight": 0
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 1,
               "weight": 0
             }
@@ -657,17 +665,17 @@ app.get('/api/recover', async (req, res) => {
           "name": "Russian Twists",
           "sets": [
             {
-              "id": "1",
+              "id": "f0Q1cKINdD", 
               "reps": 20,
               "weight": 5
             },
             {
-              "id": "2",
+              "id": "N2p3mogb9n", 
               "reps": 20,
               "weight": 5
             },
             {
-              "id": "3",
+              "id": "Q87ulZ8YZq", 
               "reps": 20,
               "weight": 5
             }
@@ -683,8 +691,4 @@ app.get('/api/recover', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error recovering database', error: error.message });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Mock API server running at http://localhost:${port}`);
 });
