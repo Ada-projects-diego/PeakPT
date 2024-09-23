@@ -3,12 +3,22 @@ const { MongoClient } = require('mongodb');
 const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
+const readline = require('readline');
 
 dotenv.config();
 
 const DOCKER_CONTAINER_NAME = 'peakpt-mongodb';
 const MONGODB_PORT = 27017;
 const MONGODB_DATABASE = 'peakptdb';
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function askQuestion(query) {
+  return new Promise(resolve => rl.question(query, resolve));
+}
 
 function runCommand(command) {
   return new Promise((resolve, reject) => {
@@ -56,6 +66,7 @@ async function setupDocker() {
 }
 
 async function setupDatabase() {
+  console.log('Setting up MongoDB database...');
   const uri = `mongodb://localhost:${MONGODB_PORT}/${MONGODB_DATABASE}`;
   const client = new MongoClient(uri);
 
@@ -65,33 +76,130 @@ async function setupDatabase() {
 
     const db = client.db();
 
-    // Create collection
+    // Create collections
     await db.createCollection('workouts');
-    console.log('Collection created successfully');
+    await db.createCollection('exercises');
+    console.log('Collections created successfully');
 
     // Create index
     await db.collection('workouts').createIndex({ date: 1 });
     console.log('Index created successfully');
 
-    // Read and insert sample data
-    const jsonFilePath = path.join(__dirname, '..', 'data', 'workout-history-db.json');
-    console.log('Attempting to read JSON file from:', jsonFilePath);
+    // Insert exercise data
+    const exerciseData = [
+      { "id": "1", "name": "Squat" },
+      { "id": "2", "name": "Deadlift" },
+      { "id": "3", "name": "Bench Press" },
+      { "id": "4", "name": "Overhead Press" },
+      { "id": "5", "name": "Barbell Row" }
+    ];
+    await db.collection('exercises').insertMany(exerciseData);
+    console.log('Exercise data inserted successfully');
+
+    // Ask user if they want to add fake past workout history
+    const addFakeData = await askQuestion('Add fake past workout history data? (y/n): ');
     
-    if (!fs.existsSync(jsonFilePath)) {
-      console.error('JSON file not found at:', jsonFilePath);
-      process.exit(1);
+    if (addFakeData.toLowerCase() === 'y') {
+      const workoutHistoryData = [
+        {
+          "date": "2024-09-05",
+          "name": "Upper body workout",
+          "exercises": [
+            {
+              "id": "1",
+              "name": "Bent Over Row",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 5, "weight": 43 },
+                { "id": "N2p3mogb9n", "reps": 5, "weight": 43 },
+                { "id": "Q87ulZ8YZq", "reps": 5, "weight": 43 }
+              ]
+            },
+            {
+              "id": "2",
+              "name": "Bench Press",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 5, "weight": 20.5 },
+                { "id": "N2p3mogb9n", "reps": 5, "weight": 20.5 },
+                { "id": "Q87ulZ8YZq", "reps": 5, "weight": 20.5 }
+              ]
+            },
+            {
+              "id": "3",
+              "name": "Pull up",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 5, "weight": 0 },
+                { "id": "N2p3mogb9n", "reps": 5, "weight": 0 },
+                { "id": "Q87ulZ8YZq", "reps": 5, "weight": 0 }
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2024-09-07",
+          "name": "Leg day workout",
+          "exercises": [
+            {
+              "id": "1",
+              "name": "Squats",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 8, "weight": 70 },
+                { "id": "N2p3mogb9n", "reps": 8, "weight": 70 },
+                { "id": "Q87ulZ8YZq", "reps": 8, "weight": 70 },
+                { "id": "pVLVJW01Pi", "reps": 8, "weight": 70 }
+              ]
+            },
+            {
+              "id": "2",
+              "name": "Deadlifts",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 5, "weight": 85 },
+                { "id": "N2p3mogb9n", "reps": 5, "weight": 85 },
+                { "id": "Q87ulZ8YZq", "reps": 5, "weight": 85 }
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2024-09-09",
+          "name": "Core workout",
+          "exercises": [
+            {
+              "id": "1",
+              "name": "Rolling Planks",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 1, "weight": 0 },
+                { "id": "N2p3mogb9n", "reps": 1, "weight": 0 },
+                { "id": "Q87ulZ8YZq", "reps": 1, "weight": 0 }
+              ]
+            },
+            {
+              "id": "2",
+              "name": "Russian Twists",
+              "sets": [
+                { "id": "f0Q1cKINdD", "reps": 20, "weight": 5 },
+                { "id": "N2p3mogb9n", "reps": 20, "weight": 5 },
+                { "id": "Q87ulZ8YZq", "reps": 20, "weight": 5 }
+              ]
+            }
+          ]
+        }
+      ];
+
+      // Parse date strings to Date objects
+      const workoutHistory = workoutHistoryData.map(workout => ({
+        ...workout,
+        date: new Date(workout.date)
+      }));
+
+      const result = await db.collection('workouts').insertMany(workoutHistory);
+      console.log('Fake workout history data inserted successfully. Inserted count:', result.insertedCount);
     }
 
-    const workoutHistoryData = fs.readFileSync(jsonFilePath, 'utf8');
-    const workoutHistory = JSON.parse(workoutHistoryData);
-    console.log('Successfully parsed JSON data. Number of records:', workoutHistory.length);
-
-    const result = await db.collection('workouts').insertMany(workoutHistory);
-    console.log('Sample data inserted successfully. Inserted count:', result.insertedCount);
-
     // Verify insertion
-    const count = await db.collection('workouts').countDocuments();
-    console.log('Total documents in workouts collection:', count);
+    const workoutCount = await db.collection('workouts').countDocuments();
+    console.log('Total documents in workouts collection:', workoutCount);
+    const exerciseCount = await db.collection('exercises').countDocuments();
+    console.log('Total documents in exercises collection:', exerciseCount);
 
     console.log('Database setup complete!');
   } catch (error) {
@@ -99,6 +207,7 @@ async function setupDatabase() {
     process.exit(1);
   } finally {
     await client.close();
+    rl.close();
   }
 }
 

@@ -2,7 +2,10 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from '../swagger.json';
 import workoutRoutes from './routes/workoutRoutes';
+import exerciseRoutes from './routes/exerciseRoutes';
 
 dotenv.config();
 
@@ -21,7 +24,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peakptdb'
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
+app.use(['/docs', '/api-docs', '/'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/workouts', workoutRoutes);
+app.use('/api/exercises', exerciseRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -30,5 +35,5 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 app.listen(port, () => {
-  console.log(`Backend server running on port ${port}`);
+  console.log(`Backend server running on http://localhost:${port}`);
 });
