@@ -3,532 +3,19 @@
   "info": {
     "title": "PeakPT API",
     "version": "1.0.0",
-    "description": "API for tracking workouts and exercises"
+    "description": "API for managing exercises and workouts"
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api"
+      "url": "http://localhost:5000",
+      "description": "Local development server"
     }
   ],
   "paths": {
-    "/workouts": {
-      "get": {
-        "summary": "Get all workouts",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Workout"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error reading workouts"
-          }
-        }
-      }
-    },
-    "/workouts/{date}": {
-      "get": {
-        "summary": "Get workout by date",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Workout"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid date format"
-          },
-          "404": {
-            "description": "Workout not found"
-          },
-          "500": {
-            "description": "Error reading workouts"
-          }
-        }
-      }
-    },
-    "/workouts/{date}/exercises": {
-      "get": {
-        "summary": "Get completed exercise by date and exercise name",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompletedExercise"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid date format"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading workouts"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete completed exercise by date and exercise name",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "400": {
-            "description": "Invalid date format or missing exercise name"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      }
-    },
-    "/workouts/{date}/exercises/{exerciseId}": {
-      "get": {
-        "summary": "Get completed exercise by date and exercise id",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompletedExercise"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid date format"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading workouts"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete completed exercise by date and exercise id",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "400": {
-            "description": "Invalid date format"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      }
-    },
-    "/workouts/{date}/exercises/{exerciseId}/sets": {
-      "delete": {
-        "summary": "Delete sets by date, exercise id, and set id(s)",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "setIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "400": {
-            "description": "Invalid date format or invalid setIds"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      }
-    },
-    "/workouts/{date}/exercises/byname/{exerciseName}/sets": {
-      "delete": {
-        "summary": "Delete sets by date, exercise name, and set id(s)",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "setIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "400": {
-            "description": "Invalid date format or invalid setIds"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      },
-      "put": {
-        "summary": "Bulk update sets by date, exercise name, and set id(s)",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "updates": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "reps": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Number of repetitions (must be greater than 0)"
-                        },
-                        "weight": {
-                          "type": "number"
-                        }
-                      },
-                      "required": ["id"]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompletedExercise"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid date format, invalid updates, or reps less than or equal to 0"
-          },
-          "404": {
-            "description": "Workout or exercise not found"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      },
-      "post": {
-        "summary": "Add a new set to an exercise (handles new workout, new exercise, and existing exercise scenarios)",
-        "parameters": [
-          {
-            "name": "date",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Date in YYYY-MM-DD format",
-            "example": "2024-09-18"
-          },
-          {
-            "name": "exerciseName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "reps": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Number of repetitions (must be greater than 0)"
-                  },
-                  "weight": {
-                    "type": "number",
-                    "minimum": 0,
-                    "description": "Weight (must be non-negative)"
-                  }
-                },
-                "required": ["reps", "weight"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully added new set",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompletedExercise"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid date format, invalid reps, or invalid weight"
-          },
-          "500": {
-            "description": "Error reading or writing workouts"
-          }
-        }
-      }
-    },
-    "/recover": {
-      "get": {
-        "summary": "Recover database to initial state",
-        "responses": {
-          "200": {
-            "description": "Database recovered successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error recovering database"
-          }
-        }
-      }
-    },
-    "/exercises": {
+    "/api/exercises": {
       "get": {
         "summary": "Get all exercises",
+        "tags": ["Exercises"],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -542,20 +29,44 @@
                 }
               }
             }
-          },
-          "500": {
-            "description": "Error reading exercises"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new exercise",
+        "tags": ["Exercises"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exercise"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Exercise created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/exercises/{id}": {
+    "/api/exercises/{id}": {
       "get": {
-        "summary": "Get exercise by id",
+        "summary": "Get exercise by ID",
+        "tags": ["Exercises"],
         "parameters": [
           {
-            "name": "id",
             "in": "path",
+            "name": "id",
             "required": true,
             "schema": {
               "type": "string"
@@ -572,12 +83,416 @@
                 }
               }
             }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update exercise by ID",
+        "tags": ["Exercises"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exercise"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exercise updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete exercise by ID",
+        "tags": ["Exercises"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Exercise deleted successfully"
+          }
+        }
+      }
+    },
+    "/api/workouts": {
+      "get": {
+        "summary": "Get all workouts",
+        "tags": ["Workouts"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Workout"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/{date}": {
+      "get": {
+        "summary": "Get workout by date",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workout"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/{date}/exercises": {
+      "get": {
+        "summary": "Get exercise by date and name",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
           },
-          "404": {
-            "description": "Exercise not found"
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete exercise by date and name",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
           },
-          "500": {
-            "description": "Error reading exercises"
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Exercise deleted successfully"
+          }
+        }
+      }
+    },
+    "/api/workouts/{date}/exercises/{exerciseId}": {
+      "get": {
+        "summary": "Get exercise by date and ID",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete exercise by date and ID",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Exercise deleted successfully"
+          }
+        }
+      }
+    },
+    "/api/workouts/{date}/exercises/{exerciseId}/sets": {
+      "delete": {
+        "summary": "Delete sets by date, exercise ID, and set IDs",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "setIds",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sets deleted successfully"
+          }
+        }
+      }
+    },
+    "/api/workouts/{date}/exercises/byname/{exerciseName}/sets": {
+      "delete": {
+        "summary": "Delete sets by date, exercise name, and set IDs",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "setIds",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sets deleted successfully"
+          }
+        }
+      },
+      "put": {
+        "summary": "Bulk update sets by date and exercise name",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Set"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sets updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add new set to exercise",
+        "tags": ["Workouts"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exerciseName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Set"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Set added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
           }
         }
       }
@@ -585,26 +500,9 @@
   },
   "components": {
     "schemas": {
-      "Workout": {
+      "Exercise": {
         "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "name": {
-            "type": "string"
-          },
-          "exercises": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CompletedExercise"
-            }
-          }
-        }
-      },
-      "CompletedExercise": {
-        "type": "object",
+        "required": ["id", "name"],
         "properties": {
           "id": {
             "type": "string"
@@ -622,26 +520,35 @@
       },
       "Set": {
         "type": "object",
+        "required": ["id", "reps", "weight"],
         "properties": {
           "id": {
             "type": "string"
           },
           "reps": {
-            "type": "integer"
+            "type": "number"
           },
           "weight": {
             "type": "number"
           }
         }
       },
-      "Exercise": {
+      "Workout": {
         "type": "object",
+        "required": ["date", "name", "exercises"],
         "properties": {
-          "id": {
-            "type": "string"
+          "date": {
+            "type": "string",
+            "format": "date"
           },
           "name": {
             "type": "string"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Exercise"
+            }
           }
         }
       }
