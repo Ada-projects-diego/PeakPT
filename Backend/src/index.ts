@@ -24,7 +24,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peakptdb'
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
-app.use(['/docs', '/api-docs', '/'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(['/docs', '/api-docs'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/exercises', exerciseRoutes);
 
