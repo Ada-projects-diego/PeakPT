@@ -54,11 +54,17 @@ export const agent = {
     addSet: (date: string, exerciseName: string, set: Omit<Set, 'id'>): Promise<CompletedExercise> =>
       api.post<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, set).then(responseBody),
   },
-  Exercises: {
-    list: (): Promise<Exercise[]> => 
+  Exercises:  {
+    list: (): Promise<Exercise[]> =>
       api.get<Exercise[]>('/exercises').then(responseBody),
-    details: (id: string): Promise<Exercise> => 
+    details: (id: string): Promise<Exercise> =>
       api.get<Exercise>(`/exercises/${id}`).then(responseBody),
+    create: (exercise: Exercise): Promise<Exercise> =>
+      api.post<Exercise>('/exercises', exercise).then(responseBody),
+    update: (id: string, exercise: Exercise): Promise<Exercise> =>
+      api.put<Exercise>(`/exercises/${id}`, exercise).then(responseBody),
+    delete: (id: string): Promise<void> =>
+      api.delete<void>(`/exercises/${id}`).then(responseBody),
   },
   System: {
     recover: (): Promise<{ message: string }> =>
