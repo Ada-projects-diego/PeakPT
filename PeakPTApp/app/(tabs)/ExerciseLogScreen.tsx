@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { agent, CompletedExercise } from '@/api/agent';
 
 type RouteParams = {
@@ -20,15 +20,7 @@ const ExerciseLogScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setCurrentDate(new Date(routeDate));
-  }, [routeDate]);
-
-  useEffect(() => {
-    fetchExercisesForDate(currentDate);
-  }, [currentDate]);
-
-  const fetchExercisesForDate = async (date: Date) => {
+  const fetchExercisesForDate = useCallback(async (date: Date) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -41,12 +33,19 @@ const ExerciseLogScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentDate(new Date(routeDate));
+      fetchExercisesForDate(new Date(routeDate));
+    }, [routeDate, fetchExercisesForDate])
+  );
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    navigation.setParams({ date: newDate.toISOString() } as never);
+    navigation.setParams({ date: newDate.toISOString().split('T')[0] } as never);
   };
 
   const addExercise = () => {
