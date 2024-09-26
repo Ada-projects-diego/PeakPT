@@ -55,7 +55,7 @@ const ExerciseLogScreen = () => {
   
   const editExercise = (exercise: CompletedExercise) => {
     navigation.navigate('ExerciseLogEntryScreen' as never, { 
-      exerciseId: exercise.id, 
+      exerciseId: exercise._id, 
       exerciseName: exercise.name, 
       date: currentDate.toISOString().split('T')[0] 
     } as never);
@@ -70,7 +70,7 @@ const ExerciseLogScreen = () => {
       try {
         const dateString = currentDate.toISOString().split('T')[0];
         await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
-        setExercises(exercises.filter(exercise => exercise.id !== deletingId));
+        setExercises(exercises.filter(exercise => exercise._id !== deletingId));
       } catch (err) {
         console.error('Failed to delete exercise:', err);
         setError('Failed to delete exercise. Please try again.');
@@ -89,7 +89,7 @@ const ExerciseLogScreen = () => {
       <View style={styles.exerciseHeader}>
         <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
         <View style={styles.exerciseActions}>
-          {deletingId === item.id ? (
+          {deletingId === item._id ? (
             <>
               <TouchableOpacity onPress={confirmDelete} style={styles.actionButton}>
                 <Ionicons name="checkmark-circle-outline" size={24} color="#4CD964" />
@@ -103,7 +103,7 @@ const ExerciseLogScreen = () => {
               <TouchableOpacity onPress={() => editExercise(item)} style={styles.actionButton}>
                 <Ionicons name="create-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => initiateDelete(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => initiateDelete(item._id)} style={styles.actionButton}>
                 <Ionicons name="trash-outline" size={24} color="#FF3B30" />
               </TouchableOpacity>
             </>
@@ -144,7 +144,7 @@ const ExerciseLogScreen = () => {
         <FlatList
           data={exercises}
           renderItem={renderExercise}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           style={styles.exerciseList}
         />
       )}

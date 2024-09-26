@@ -47,7 +47,7 @@ const ExerciseLibraryScreen = () => {
     <TouchableOpacity 
       style={styles.exerciseItem}
       onPress={() => navigation.navigate('ExerciseLogEntryScreen' as never, { 
-        exerciseId: item.id, 
+        exerciseId: item._id, 
         exerciseName: item.name, 
         date: date 
       } as never)}
@@ -80,7 +80,7 @@ const ExerciseLibraryScreen = () => {
       <FlatList
         data={filteredExercises}
         renderItem={renderExerciseItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         style={styles.list}
       />
     </ThemedView>

@@ -87,7 +87,7 @@ const ExerciseLogEntryScreen = () => {
   const handleDelete = async () => {
     try {
       await agent.Workouts.deleteSets(date, exerciseId, selectedSets);
-      setSets(sets.filter(set => !selectedSets.includes(set.id)));
+      setSets(sets.filter(set => !selectedSets.includes(set._id)));
       setSelectedSets([]);
     } catch (error) {
       console.error('Failed to delete sets:', error);
@@ -109,10 +109,10 @@ const ExerciseLogEntryScreen = () => {
     <TouchableOpacity
       style={[
         styles.setItem,
-        selectedSets.includes(item.id) && styles.selectedSetItem
+        selectedSets.includes(item._id) && styles.selectedSetItem
       ]}
-      onPress={() => toggleSetSelection(item.id)}
-      key={`${item.id}-${index}`} // Add this line
+      onPress={() => toggleSetSelection(item._id)}
+      key={`${item._id}-${index}`} // Add this line
     >
       <ThemedText style={styles.setText}>
         {index + 1}   {item.weight} kgs   {item.reps} reps
@@ -195,7 +195,7 @@ const ExerciseLogEntryScreen = () => {
       <FlatList
         data={sets}
         renderItem={renderSet}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item, index) => `${item._id}-${index}`}
         style={styles.setList}
       />
     </ThemedView>
