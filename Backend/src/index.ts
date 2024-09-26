@@ -19,7 +19,7 @@ app.use(express.json());
 console.log('Backend server starting...');
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peakptdb')
+mongoose.connect(process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/peakptdb')
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 

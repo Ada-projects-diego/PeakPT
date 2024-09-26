@@ -427,6 +427,16 @@ export const addNewSetToExercise = async (req: Request, res: Response) => {
   }
 };
 
+export const logWorkoutVision = async (req: Request, res: Response) => {
+  try {
+    // For now, we just return a 200 OK response with a basic message
+    res.status(200).json({ message: "Workout logged successfully via vision." });
+  } catch (error) {
+    // If any unexpected error occurs, return a 500 error
+    res.status(500).json({ message: "An error occurred while logging the workout.", error });
+  }
+};
+
 function generateUniqueId(length: number = 10): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';

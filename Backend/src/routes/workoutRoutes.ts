@@ -9,7 +9,8 @@ import {
   deleteSetsByDateExerciseIdAndSetIds,
   deleteSetsByDateExerciseNameAndSetIds, 
   bulkUpdateSetsByDateAndExerciseName,
-  addNewSetToExercise
+  addNewSetToExercise,
+  logWorkoutVision
 } from '../controllers/workoutController';
 
 const router = express.Router();
@@ -26,5 +27,7 @@ router.delete('/:date/exercises/byname/:exerciseName/sets', deleteSetsByDateExer
 
 router.put('/:date/exercises/byname/:exerciseName/sets', bulkUpdateSetsByDateAndExerciseName);
 router.post('/:date/exercises/byname/:exerciseName/sets', addNewSetToExercise);
+
+router.post('/log-vision', logWorkoutVision);
 
 export default router;
