@@ -1,29 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, FlatList, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { agent, Workout, CompletedExercise } from '@/api/agent';
 
 export const WorkoutList = () => {
   const navigation = useNavigation();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
-  useEffect(() => {
-    const fetchWorkouts = async () => {
-      try {
-        console.log('Fetching workouts...');
-        const fetchedWorkouts = await agent.Workouts.list();
-        console.log('Fetched workouts:', JSON.stringify(fetchedWorkouts, null, 2));
-        setWorkouts(fetchedWorkouts);
-      } catch (error) {
-        console.error('Failed to fetch workouts:', error);
-      }
-    };
-  
-    fetchWorkouts();
+  const fetchWorkouts = useCallback(async () => {
+    try {
+      console.log('Fetching workouts...');
+      const fetchedWorkouts = await agent.Workouts.list();
+      console.log('Fetched workouts:', JSON.stringify(fetchedWorkouts, null, 2));
+      setWorkouts(fetchedWorkouts);
+    } catch (error) {
+      console.error('Failed to fetch workouts:', error);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchWorkouts();
+    }, [fetchWorkouts])
+  );
 
   const handleAddWorkout = () => {
     const today = new Date().toISOString().split('T')[0];
