@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -22,18 +22,20 @@ const ExerciseLogEntryScreen = () => {
   const [sets, setSets] = useState<Set[]>([]);
   const [selectedSets, setSelectedSets] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchExerciseDetails();
-  }, []);
-
-  const fetchExerciseDetails = async () => {
+  const fetchExerciseDetails = useCallback(async () => {
     try {
+      console.log('Fetching exercise details:', date, exerciseId);
       const exercise = await agent.Workouts.getExerciseByDateAndId(date, exerciseId);
+      console.log('Exercise details:', exercise);
       setSets(exercise.sets);
     } catch (error) {
       console.error('Failed to fetch exercise details:', error);
     }
-  };
+  }, [date, exerciseId]);
+  
+  useEffect(() => {
+    fetchExerciseDetails();
+  }, [fetchExerciseDetails]);
 
   const changeValue = (setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
     const numValue = parseInt(value);
