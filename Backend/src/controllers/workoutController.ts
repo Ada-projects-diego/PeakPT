@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Workout, { IWorkout, IExercise, ISet } from '../models/workout';
+import Workout, { IWorkout, ICompletedExercise, ISet } from '../models/workout';
 
 export const getWorkouts = async (req: Request, res: Response) => {
   try {

@@ -1,13 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISet extends Document {
-  id: string;
   reps: number;
   weight: number;
 }
 
-export interface IExercise extends Document {
-  id: string;
+export interface ICompletedExercise extends Document {
   name: string;
   sets: ISet[];
 }
@@ -15,27 +13,23 @@ export interface IExercise extends Document {
 export interface IWorkout extends Document {
   date: Date;
   name: string;
-  exercises: IExercise[];
+  exercises: ICompletedExercise[];
 }
 
-export const SetSchema: Schema = new Schema({
-  id: { type: String, required: true },
+const SetSchema: Schema = new Schema({
   reps: { type: Number, required: true },
   weight: { type: Number, required: true }
-});
+}, { _id: true });
 
-export const ExerciseSchema: Schema = new Schema({
-  id: { type: String, required: true },
+const CompletedExerciseSchema: Schema = new Schema({
   name: { type: String, required: true },
   sets: [SetSchema]
 });
 
-export const WorkoutSchema: Schema = new Schema({
+const WorkoutSchema: Schema = new Schema({
   date: { type: Date, required: true },
   name: { type: String, required: true },
-  exercises: [ExerciseSchema]
+  exercises: [CompletedExerciseSchema]
 });
 
-const Workout = mongoose.model<IWorkout>('Workout', WorkoutSchema);
-
-export default Workout;
+export default mongoose.model<IWorkout>('Workout', WorkoutSchema);
