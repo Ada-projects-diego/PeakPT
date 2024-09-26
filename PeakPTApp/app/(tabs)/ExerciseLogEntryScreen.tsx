@@ -13,12 +13,12 @@ type RouteParams = {
 };
 
 const ExerciseLogEntryScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation(); // In case we implement backtracking
   const route = useRoute();
   const { exerciseId, exerciseName, date } = route.params as RouteParams;
 
-  const [weight, setWeight] = useState('0');
-  const [reps, setReps] = useState('0');
+  const [weight, setWeight] = useState('10');
+  const [reps, setReps] = useState('10');
   const [sets, setSets] = useState<Set[]>([]);
   const [selectedSets, setSelectedSets] = useState<string[]>([]);
 
