@@ -6,6 +6,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { agent, Set } from '@/api/agent';
 
+
+// Good page to talk about, especially the callback function stuff
+
+// TODO: problem with ids being undefined but needed to be passed to the backend
+
 type RouteParams = {
   exerciseId: string;
   exerciseName: string;
@@ -47,11 +52,11 @@ const ExerciseLogEntryScreen = () => {
 
   const handleSave = async () => {
     try {
-      const newSet = { reps: parseInt(reps), weight: parseFloat(weight) };
+      const newSet: Omit<Set, "id"> = { reps: parseInt(reps), weight: parseFloat(weight) };
       const updatedExercise = await agent.Workouts.addSet(date, exerciseName, newSet);
       setSets(updatedExercise.sets);
-      setWeight('0');
-      setReps('0');
+      setWeight(weight);
+      setReps(reps);
     } catch (error) {
       console.error('Failed to save set:', error);
     }
