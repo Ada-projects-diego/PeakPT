@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { nanoid } from 'nanoid';
 import Workout, { IWorkout, IExercise, ISet } from '../models/workout';
 
 export const getWorkouts = async (req: Request, res: Response) => {
