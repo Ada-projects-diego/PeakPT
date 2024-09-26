@@ -18,7 +18,7 @@ app.use(express.json());
 
 console.log('Backend server starting...');
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://apiclient:8nyvbH334GSZducD@dev-app-eu-west-01.hzjk3.mongodb.net/peakptapp?retryWrites=true&w=majority&appName=dev-app-eu-west-01";
+const uri = process.env.MONGODB_URI || "mongodb+srv://apiclient:8nyvbH334GSZducD@dev-app-eu-west-01.hzjk3.mongodb.net/peakptdb?retryWrites=true&w=majority&appName=dev-app-eu-west-01";
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
 
 // Connect to MongoDB
@@ -29,6 +29,7 @@ if (process.env.NODE_ENV === 'development') {
   .catch((err) => console.error('MongoDB connection error:', err));
 }
 else {
+  console.log('Connecting to beta database...');
   connectToBetaDatabase();
 }
 // Routes
