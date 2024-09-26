@@ -6,15 +6,9 @@ import { ThemedView } from '@/components/ThemedView';
 import { CalendarView } from '@/components/CalendarView';
 import { WorkoutList } from '@/containers/workoutList/workoutList';
 
-const StartTrackingButton = () => (
-  <TouchableOpacity style={styles.button}>
-    <ThemedText style={styles.buttonText}>Start Tracking</ThemedText>
-  </TouchableOpacity>
-);
-
 export default function HomeScreen() {
   const [isCalendarView, setIsCalendarView] = useState(false);
-  const [hasWorkouts, setHasWorkouts] = useState(true); // Changed to true for testing
+  const [hasWorkouts] = useState(true);
 
   return (
     <ThemedView style={styles.container}>
@@ -46,7 +40,6 @@ export default function HomeScreen() {
           <ThemedText style={styles.noWorkoutsText}>
             No workouts yet. Start tracking your progress!
           </ThemedText>
-          <StartTrackingButton />
         </ThemedView>
       )}
     </ThemedView>
