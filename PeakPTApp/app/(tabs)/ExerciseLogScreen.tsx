@@ -28,6 +28,12 @@ const ExerciseLogScreen = () => {
     fetchExercisesForDate(currentDate);
   }, [currentDate]);
 
+  const handleCameraPress = () => {
+    // TODO: Implement camera functionality
+    console.log('Camera button pressed');
+    // navigation.navigate('FakePhotoScreen' as never);
+  };
+
   const fetchExercisesForDate = async (date: Date) => {
     setIsLoading(true);
     setError(null);
@@ -149,6 +155,10 @@ const ExerciseLogScreen = () => {
         />
       )}
 
+      <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
+        <Ionicons name="camera" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.addButton} onPress={addExercise}>
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
@@ -233,6 +243,22 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
+  },
+  cameraButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 100, // Positioned 40px above the add button
+    backgroundColor: '#1E90FF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

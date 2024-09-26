@@ -53,6 +53,8 @@ export const agent = {
       api.put<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, { updates }).then(responseBody),
     addSet: (date: string, exerciseName: string, set: Omit<Set, 'id'>): Promise<CompletedExercise> =>
       api.post<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, set).then(responseBody),
+    // Not implemented yet
+    visionLog: (): Promise<{ message: string }> => console.log('visionLog not implemented yet') as any
   },
   Exercises: {
     list: (): Promise<Exercise[]> => 
