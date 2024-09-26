@@ -6,6 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from '../swagger.json';
 import workoutRoutes from './routes/workoutRoutes';
 import exerciseRoutes from './routes/exerciseRoutes';
+import { loggingMiddleware } from './middleware/loggingMiddleware';
 
 dotenv.config();
 
@@ -22,6 +23,10 @@ console.log('Backend server starting...');
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peakptdb')
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
+
+// Middleware
+app.use(express.json());
+app.use(loggingMiddleware);
 
 // Routes
 app.use(['/docs', '/api-docs'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
