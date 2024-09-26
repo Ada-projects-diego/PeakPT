@@ -23,6 +23,24 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="ExerciseLibraryScreen"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="ExerciseLogScreen"
+        options={{
+          href: null, 
+        }}
+      />
+      <Tabs.Screen
+        name="ExerciseLogEntryScreen"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
