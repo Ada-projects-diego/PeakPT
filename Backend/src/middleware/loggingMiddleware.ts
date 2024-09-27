@@ -32,9 +32,11 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Helper function to truncate long strings
-const truncate = (str: string, maxLength: number = 100) => {
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength) + '...';
+const truncate = (str: any, maxLength: number = 100): string => {
+  if (str === undefined || str === null) return '';
+  const stringified = typeof str === 'string' ? str : JSON.stringify(str);
+  if (stringified.length <= maxLength) return stringified;
+  return stringified.slice(0, maxLength) + '...';
 };
 
 // Middleware to log requests and responses
@@ -44,8 +46,8 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
   // Log request
   logger.info(`Incoming ${req.method} request to ${req.originalUrl}`, {
     ip: req.ip,
-    headers: truncate(JSON.stringify(req.headers)),
-    body: truncate(JSON.stringify(req.body))
+    headers: truncate(req.headers),
+    body: truncate(req.body)
   });
 
   // Capture the original end function
@@ -66,7 +68,7 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
     logger.info(`Outgoing response for ${req.method} ${req.originalUrl}`, {
       status: res.statusCode,
       duration: `${duration}ms`,
-      headers: truncate(JSON.stringify(res.getHeaders())),
+      headers: truncate(res.getHeaders()),
       body: truncate(responseBody)
     });
   });
@@ -77,8 +79,8 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
 // Mongoose middleware to log database operations
 mongoose.set('debug', (collectionName: string, method: string, query: any, doc: any) => {
   logger.info(`MongoDB ${method} operation on ${collectionName}`, {
-    query: truncate(JSON.stringify(query)),
-    doc: truncate(JSON.stringify(doc))
+    query: truncate(query),
+    doc: truncate(doc)
   });
 });
 
