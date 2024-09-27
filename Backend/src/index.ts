@@ -6,32 +6,53 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from '../swagger.json';
 import workoutRoutes from './routes/workoutRoutes';
 import exerciseRoutes from './routes/exerciseRoutes';
+import { loggingMiddleware, logger } from './middleware/loggingMiddleware';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(loggingMiddleware);
 
 console.log('Backend server starting...');
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://apiclient:8nyvbH334GSZducD@dev-app-eu-west-01.hzjk3.mongodb.net/peakptdb?retryWrites=true&w=majority&appName=dev-app-eu-west-01";
-const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+// MongoDB connection URI based on NODE_ENV
+const uri = process.env.NODE_ENV === 'beta' 
+  ? process.env.MONGODB_URI || "mongodb+srv://apiclient:8nyvbH334GSZducD@dev-app-eu-west-01.hzjk3.mongodb.net/peakptapp?retryWrites=true&w=majority&appName=dev-app-eu-west-01"
+  : process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/peakptdb';
 
 // Connect to MongoDB
-// if NODE_ENV is development then
-if (process.env.NODE_ENV === 'beta') {
-  console.log('Connecting to beta database...');
-  connectToBetaDatabase();
-}
-else {
-  mongoose.connect(process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/peakptdb')
-  .then(() => console.log('Connected to MongoDB through local docker container'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-}
+mongoose.connect(uri)
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    
+    // Check for required collections
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection is not established');
+    }
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+    logger.info('Collections found:', collectionNames);
+    
+    if (!collectionNames.includes('workouts') || !collectionNames.includes('exercises')) {
+      throw new Error('Required collections "workouts" and "exercises" not found');
+    }
+    
+    // Start the server only after confirming collections
+    app.listen(port, () => {
+      console.log(`Backend server running on http://localhost:${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
+
 // Routes
 app.use(['/docs', '/api-docs'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/workouts', workoutRoutes);
@@ -41,13 +62,6 @@ app.use('/api/exercises', exerciseRoutes);
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Internal server error' });
-});
-
-// Start the server only after successfully connecting to the database
-mongoose.connection.once('open', () => {
-  app.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
-  });
 });
 
 // Handle database connection errors
@@ -66,13 +80,3 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
-
-async function connectToBetaDatabase() {
-  try {
-    await mongoose.connect(uri, clientOptions);
-    console.log("Successfully connected to MongoDB!");
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-    process.exit(1);
-  }
-}

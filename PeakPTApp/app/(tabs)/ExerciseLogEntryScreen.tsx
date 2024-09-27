@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { agent, Set } from '@/api/agent';
 
-// Good page to talk about, especially the callback function stuff
-// TODO: problem with ids being undefined but needed to be passed to the backend
-
-type RouteParams = {
-  exerciseId: string;
-  exerciseName: string;
-  date: string;
+type RootStackParamList = {
+  ExerciseLogEntryScreen: { exerciseId: string; exerciseName: string; date: string };
 };
 
+type ExerciseLogEntryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseLogEntryScreen'>;
+type ExerciseLogEntryScreenRouteProp = RouteProp<RootStackParamList, 'ExerciseLogEntryScreen'>;
+
 const ExerciseLogEntryScreen = () => {
-  const navigation = useNavigation(); // In case we implement backtracking
-  const route = useRoute();
-  const { exerciseId, exerciseName, date } = route.params as RouteParams;
+  console.log('ExerciseLogEntryScreen: Rendering component');
+  const navigation = useNavigation<ExerciseLogEntryScreenNavigationProp>();
+  const route = useRoute<ExerciseLogEntryScreenRouteProp>();
+  const { exerciseId, exerciseName, date } = route.params;
 
   const [weight, setWeight] = useState('10');
   const [reps, setReps] = useState('10');
@@ -27,79 +28,99 @@ const ExerciseLogEntryScreen = () => {
 
   const fetchExerciseDetails = useCallback(async () => {
     try {
-      console.log('Fetching exercise details:', date, exerciseId);
+      console.log('ExerciseLogEntryScreen: Fetching exercise details:', date, exerciseId);
       const exercise = await agent.Workouts.getExerciseByDateAndId(date, exerciseId);
-      console.log('Exercise details:', exercise);
+      console.log('ExerciseLogEntryScreen: Exercise details:', exercise);
       setSets(exercise.sets);
     } catch (error) {
-      console.error('Failed to fetch exercise details:', error);
+      console.error('ExerciseLogEntryScreen: Failed to fetch exercise details:', error);
     }
   }, [date, exerciseId]);
-  
-  useEffect(() => {
-    fetchExerciseDetails();
-  }, [fetchExerciseDetails]);
 
-  const changeValue = (setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
+  useFocusEffect(
+    useCallback(() => {
+      fetchExerciseDetails();
+    }, [fetchExerciseDetails])
+  );
+
+  const changeValue = useCallback((setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
     const numValue = parseInt(value);
     if (!isNaN(numValue)) {
       const newValue = Math.max(0, numValue + increment);
       setter(newValue.toString());
     }
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
-      const newSet: Omit<Set, "id"> = { reps: parseInt(reps), weight: parseFloat(weight) };
+      console.log('ExerciseLogEntryScreen: Saving new set');
+      const newSet: Omit<Set, '_id'> = { 
+        reps: parseInt(reps), 
+        weight: parseFloat(weight) 
+      };
       const updatedExercise = await agent.Workouts.addSet(date, exerciseName, newSet);
-      setSets(updatedExercise.sets);
-      setWeight(weight);
-      setReps(reps);
+      console.log('ExerciseLogEntryScreen: Updated exercise received:', updatedExercise);
+      if (Array.isArray(updatedExercise.sets)) {
+        setSets(updatedExercise.sets);
+      } else {
+        console.error('ExerciseLogEntryScreen: Unexpected response structure:', updatedExercise);
+      }
+      console.log('ExerciseLogEntryScreen: New set saved successfully');
     } catch (error) {
-      console.error('Failed to save set:', error);
+      console.error('ExerciseLogEntryScreen: Failed to save set:', error);
     }
-  };
+  }, [date, exerciseName, reps, weight]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
+    console.log('ExerciseLogEntryScreen: Clearing input');
     setWeight('0');
     setReps('0');
-  };
+  }, []);
 
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+  const handleInputChange = useCallback((setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
     const numValue = parseInt(value);
     if (!isNaN(numValue) && numValue >= 0) {
       setter(numValue.toString());
     } else if (value === '') {
       setter('');
     }
-  };
+  }, []);
 
-  const handleUpdate = async () => {
+  const handleUpdate = useCallback(async () => {
     try {
+      console.log('ExerciseLogEntryScreen: Updating sets');
       const updates = selectedSets.map(id => ({
         id,
         reps: parseInt(reps),
         weight: parseFloat(weight)
       }));
       const updatedExercise = await agent.Workouts.updateSets(date, exerciseName, updates);
-      setSets(updatedExercise.sets);
+      
+      setSets(prevSets => prevSets.map(set => {
+        const updatedSet = updatedExercise.sets.find(s => s._id === set._id);
+        return updatedSet || set;
+      }));
+      
       setSelectedSets([]);
+      console.log('ExerciseLogEntryScreen: Sets updated successfully');
     } catch (error) {
-      console.error('Failed to update sets:', error);
+      console.error('ExerciseLogEntryScreen: Failed to update sets:', error);
     }
-  };
+  }, [date, exerciseName, reps, weight, selectedSets]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
+      console.log('ExerciseLogEntryScreen: Deleting sets');
       await agent.Workouts.deleteSets(date, exerciseId, selectedSets);
-      setSets(sets.filter(set => !selectedSets.includes(set._id)));
+      setSets(sets => sets.filter(set => !selectedSets.includes(set._id)));
       setSelectedSets([]);
+      console.log('ExerciseLogEntryScreen: Sets deleted successfully');
     } catch (error) {
-      console.error('Failed to delete sets:', error);
+      console.error('ExerciseLogEntryScreen: Failed to delete sets:', error);
     }
-  };
+  }, [date, exerciseId, selectedSets]);
 
-  const toggleSetSelection = (id: string) => {
+  const toggleSetSelection = useCallback((id: string) => {
     setSelectedSets(prevSelected => {
       if (prevSelected.includes(id)) {
         return prevSelected.filter(setId => setId !== id);
@@ -107,30 +128,32 @@ const ExerciseLogEntryScreen = () => {
         return [...prevSelected, id];
       }
     });
-  };
+  }, []);
 
-
-  const renderSet = ({ item, index }: { item: Set; index: number }) => (
+  const renderSet = useCallback(({ item, index }: { item: Set; index: number }) => (
     <TouchableOpacity
       style={[
         styles.setItem,
         selectedSets.includes(item._id) && styles.selectedSetItem
       ]}
       onPress={() => toggleSetSelection(item._id)}
-      key={`${item._id}-${index}`} // Add this line
+      key={`${item._id}-${index}`}
     >
       <ThemedText style={styles.setText}>
         {index + 1}   {item.weight} kgs   {item.reps} reps
       </ThemedText>
     </TouchableOpacity>
-  );
+  ), [selectedSets, toggleSetSelection]);
 
-  const isActionDisabled = parseInt(reps) === 0;
+  const isActionDisabled = useMemo(() => parseInt(reps) === 0, [reps]);
+
+  console.log('ExerciseLogEntryScreen: Rendering', sets.length, 'sets');
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>{exerciseName}</ThemedText>
       
+      {/* Weight Input */}
       <View style={styles.inputContainer}>
         <ThemedText style={styles.label}>WEIGHT (kgs)</ThemedText>
         <View style={styles.inputRow}>
@@ -149,6 +172,7 @@ const ExerciseLogEntryScreen = () => {
         </View>
       </View>
 
+      {/* Reps Input */}
       <View style={styles.inputContainer}>
         <ThemedText style={styles.label}>REPS</ThemedText>
         <View style={styles.inputRow}>
@@ -167,6 +191,7 @@ const ExerciseLogEntryScreen = () => {
         </View>
       </View>
 
+      {/* Action Buttons */}
       <View style={styles.buttonContainer}>
         {selectedSets.length > 0 ? (
           <>
@@ -197,6 +222,7 @@ const ExerciseLogEntryScreen = () => {
         )}
       </View>
 
+      {/* Set List */}
       <FlatList
         data={sets}
         renderItem={renderSet}

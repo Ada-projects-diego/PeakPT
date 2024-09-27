@@ -1,19 +1,27 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { agent, CompletedExercise } from '@/api/agent';
 
-type RouteParams = {
-  date: string;
+type RootStackParamList = {
+  ExerciseLogScreen: { date: string };
+  ExerciseLibraryScreen: { date: string };
+  ExerciseLogEntryScreen: { exerciseId: string; exerciseName: string; date: string };
 };
 
+type ExerciseLogScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseLogScreen'>;
+type ExerciseLogScreenRouteProp = RouteProp<RootStackParamList, 'ExerciseLogScreen'>;
+
 const ExerciseLogScreen = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { date: routeDate } = route.params as RouteParams;
+  console.log('ExerciseLogScreen: Rendering component');
+  const navigation = useNavigation<ExerciseLogScreenNavigationProp>();
+  const route = useRoute<ExerciseLogScreenRouteProp>();
+  const { date: routeDate } = route.params;
   const [currentDate, setCurrentDate] = useState(new Date(routeDate));
   const [exercises, setExercises] = useState<CompletedExercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,14 +29,16 @@ const ExerciseLogScreen = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchExercisesForDate = useCallback(async (date: Date) => {
+    console.log('ExerciseLogScreen: Fetching exercises for date', date.toISOString());
     setIsLoading(true);
     setError(null);
     try {
       const dateString = date.toISOString().split('T')[0];
       const workout = await agent.Workouts.details(dateString);
-      setExercises(workout.exercises || []); // Use an empty array if exercises is undefined
+      console.log('ExerciseLogScreen: Fetched workout', JSON.stringify(workout));
+      setExercises(workout.exercises || []);
     } catch (err) {
-      console.error('Failed to fetch exercises:', err);
+      console.error('ExerciseLogScreen: Failed to load exercises', err);
       setError('Failed to load exercises. Please try again.');
     } finally {
       setIsLoading(false);
@@ -37,53 +47,61 @@ const ExerciseLogScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('ExerciseLogScreen: Screen focused, fetching exercises');
       setCurrentDate(new Date(routeDate));
       fetchExercisesForDate(new Date(routeDate));
     }, [routeDate, fetchExercisesForDate])
   );
 
-  const changeDate = (days: number) => {
+  const changeDate = useCallback((days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    navigation.setParams({ date: newDate.toISOString().split('T')[0] } as never);
-  };
+    console.log('ExerciseLogScreen: Changing date to', newDate.toISOString());
+    navigation.setParams({ date: newDate.toISOString().split('T')[0] });
+  }, [currentDate, navigation]);
 
-  const addExercise = () => {
-    navigation.navigate('ExerciseLibraryScreen' as never, { date: currentDate.toISOString().split('T')[0] } as never);
-  };
-  
-  const editExercise = (exercise: CompletedExercise) => {
-    navigation.navigate('ExerciseLogEntryScreen' as never, { 
-      exerciseId: exercise._id, 
-      exerciseName: exercise.name, 
-      date: currentDate.toISOString().split('T')[0] 
-    } as never);
-  };
+  const addExercise = useCallback(() => {
+    console.log('ExerciseLogScreen: Navigating to ExerciseLibraryScreen');
+    navigation.navigate('ExerciseLibraryScreen', { date: currentDate.toISOString().split('T')[0] });
+  }, [navigation, currentDate]);
 
-  const initiateDelete = (id: string) => {
+  const editExercise = useCallback((exercise: CompletedExercise) => {
+    console.log('ExerciseLogScreen: Navigating to ExerciseLogEntryScreen for exercise', exercise._id);
+    navigation.navigate('ExerciseLogEntryScreen', {
+      exerciseId: exercise._id,
+      exerciseName: exercise.name,
+      date: currentDate.toISOString().split('T')[0]
+    });
+  }, [navigation, currentDate]);
+
+  const initiateDelete = useCallback((id: string) => {
+    console.log('ExerciseLogScreen: Initiating delete for exercise', id);
     setDeletingId(id);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (deletingId) {
+      console.log('ExerciseLogScreen: Confirming delete for exercise', deletingId);
       try {
         const dateString = currentDate.toISOString().split('T')[0];
         await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
-        setExercises(exercises.filter(exercise => exercise._id !== deletingId));
+        setExercises(prevExercises => prevExercises.filter(exercise => exercise._id !== deletingId));
+        console.log('ExerciseLogScreen: Exercise deleted successfully');
       } catch (err) {
-        console.error('Failed to delete exercise:', err);
+        console.error('ExerciseLogScreen: Failed to delete exercise', err);
         setError('Failed to delete exercise. Please try again.');
       } finally {
         setDeletingId(null);
       }
     }
-  };
+  }, [deletingId, currentDate]);
 
-  const cancelDelete = () => {
+  const cancelDelete = useCallback(() => {
+    console.log('ExerciseLogScreen: Cancelling delete');
     setDeletingId(null);
-  };
+  }, []);
 
-  const renderExercise = ({ item }: { item: CompletedExercise }) => (
+  const renderExercise = useCallback(({ item }: { item: CompletedExercise }) => (
     <View style={styles.exerciseContainer}>
       <View style={styles.exerciseHeader}>
         <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
@@ -117,7 +135,11 @@ const ExerciseLogScreen = () => {
         </View>
       ))}
     </View>
-  );
+  ), [deletingId, confirmDelete, cancelDelete, editExercise, initiateDelete]);
+
+  const memoizedExercises = useMemo(() => exercises, [exercises]);
+
+  console.log('ExerciseLogScreen: Rendering', memoizedExercises.length, 'exercises');
 
   return (
     <ThemedView style={styles.container}>
@@ -137,11 +159,11 @@ const ExerciseLogScreen = () => {
         <ActivityIndicator size="large" color="#007AFF" />
       ) : error ? (
         <ThemedText style={styles.errorText}>{error}</ThemedText>
-      ) : exercises.length === 0 ? (
+      ) : memoizedExercises.length === 0 ? (
         <ThemedText style={styles.emptyText}>No exercises recorded for this date.</ThemedText>
       ) : (
         <FlatList
-          data={exercises}
+          data={memoizedExercises}
           renderItem={renderExercise}
           keyExtractor={(item) => item._id}
           style={styles.exerciseList}
