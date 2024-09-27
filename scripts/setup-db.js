@@ -87,11 +87,15 @@ async function setupDatabase() {
 
     // Insert exercise data
     const exerciseData = [
-      { "id": "1", "name": "Squat" },
-      { "id": "2", "name": "Deadlift" },
-      { "id": "3", "name": "Bench Press" },
-      { "id": "4", "name": "Overhead Press" },
-      { "id": "5", "name": "Barbell Row" }
+      { name: "Squats" },
+      { name: "Deadlifts" },
+      { name: "Bench Press" },
+      { name: "Overhead Press" },
+      { name: "Barbell Row" },
+      { name: "Pull up" },
+      { name: "Bent Over Row" },
+      { name: "Russian Twists" },
+      { name: "Rolling Planks" }
     ];
     await db.collection('exercises').insertMany(exerciseData);
     console.log('Exercise data inserted successfully');

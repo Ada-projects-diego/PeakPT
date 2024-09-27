@@ -91,13 +91,16 @@ async function setupDatabase() {
     await mongoose.connect(uri);
     console.log('Connected successfully to MongoDB');
 
-    // Insert exercise data
     const exerciseData = [
-      { name: "Squat" },
-      { name: "Deadlift" },
+      { name: "Squats" },
+      { name: "Deadlifts" },
       { name: "Bench Press" },
       { name: "Overhead Press" },
-      { name: "Barbell Row" }
+      { name: "Barbell Row" },
+      { name: "Pull up" },
+      { name: "Bent Over Row" },
+      { name: "Russian Twists" },
+      { name: "Rolling Planks" }
     ];
     await Exercise.insertMany(exerciseData);
     console.log('Exercise data inserted successfully');
