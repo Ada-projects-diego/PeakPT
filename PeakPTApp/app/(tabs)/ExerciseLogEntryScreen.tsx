@@ -3,7 +3,7 @@ import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { agent, Set } from '@/api/agent';
 
 type RouteParams = {
@@ -13,18 +13,14 @@ type RouteParams = {
 };
 
 const ExerciseLogEntryScreen = () => {
-  const navigation = useNavigation(); // In case we implement backtracking
+  const navigation = useNavigation();
   const route = useRoute();
   const { exerciseId, exerciseName, date } = route.params as RouteParams;
 
   const [weight, setWeight] = useState('10');
   const [reps, setReps] = useState('10');
-  const [sets, setSets] = useState<Set[]>([]);
-  const [selectedSets, setSelectedSets] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetchExerciseDetails();
-  }, []);
+  const [sets, setSets] = useState([]);
+  const [selectedSets, setSelectedSets] = useState([]);
 
   const fetchExerciseDetails = async () => {
     try {
@@ -34,6 +30,12 @@ const ExerciseLogEntryScreen = () => {
       console.error('Failed to fetch exercise details:', error);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchExerciseDetails();
+    }, [date, exerciseId])
+  );
 
   const changeValue = (setter: React.Dispatch<React.SetStateAction<string>>, value: string, increment: number) => {
     const numValue = parseInt(value);
@@ -77,7 +79,13 @@ const ExerciseLogEntryScreen = () => {
         weight: parseFloat(weight)
       }));
       const updatedExercise = await agent.Workouts.updateSets(date, exerciseName, updates);
-      setSets(updatedExercise.sets);
+      
+      // Update only the modified sets in the local state
+      setSets(prevSets => prevSets.map(set => {
+        const updatedSet = updatedExercise.sets.find(s => s.id === set.id);
+        return updatedSet || set;
+      }));
+      
       setSelectedSets([]);
     } catch (error) {
       console.error('Failed to update sets:', error);
