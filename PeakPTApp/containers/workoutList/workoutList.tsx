@@ -1,41 +1,72 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, FlatList, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, NavigationProp } from '@react-navigation/native';
 import { agent, Workout, CompletedExercise } from '@/api/agent';
 
+// Define the navigation param list type
+type RootStackParamList = {
+  ExerciseLogScreen: { date: string };
+  // Add other screen params as needed
+};
+
+// Utility function for collapsible logging
+const collapsibleStringify = (obj: any, depth: number = 0): string => {
+  if (depth > 2) return '...'; // Limit depth to prevent overly nested output
+  if (typeof obj !== 'object' || obj === null) return JSON.stringify(obj);
+  
+  if (Array.isArray(obj)) {
+    const items = obj.map(item => collapsibleStringify(item, depth + 1));
+    return `[${items.join(', ')}]`;
+  }
+  
+  const props = Object.keys(obj).map(key => 
+    `${key}: ${collapsibleStringify(obj[key], depth + 1)}`
+  );
+  return `{${props.join(', ')}}`;
+};
+
 export const WorkoutList = () => {
-  const navigation = useNavigation();
+  console.log('WorkoutList: Component rendering');
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
   const fetchWorkouts = useCallback(async () => {
     try {
-      console.log('Fetching workouts...');
+      console.log('WorkoutList: Fetching workouts...');
       const fetchedWorkouts = await agent.Workouts.list();
-      console.log('Fetched workouts:', JSON.stringify(fetchedWorkouts, null, 2));
+      console.log('WorkoutList: Fetched workouts summary:', 
+        collapsibleStringify(fetchedWorkouts.map(w => ({ 
+          date: w.date, 
+          name: w.name, 
+          exerciseCount: w.exercises.length 
+        }))));
       setWorkouts(fetchedWorkouts);
     } catch (error) {
-      console.error('Failed to fetch workouts:', error);
+      console.error('WorkoutList: Failed to fetch workouts:', error);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
+      console.log('WorkoutList: Screen focused, fetching workouts');
       fetchWorkouts();
     }, [fetchWorkouts])
   );
 
   const handleAddWorkout = () => {
     const today = new Date().toISOString().split('T')[0];
-    console.log('Navigating to ExerciseLogScreen for today:', today);
-    navigation.navigate('ExerciseLogScreen' as never, { date: today } as never);
+    console.log('WorkoutList: Navigating to ExerciseLogScreen for today:', today);
+    navigation.navigate('ExerciseLogScreen', { date: today });
   };
 
-  const renderWorkoutItem = ({ item }: { item: Workout }) => (
+  const renderWorkoutItem = useMemo(() => ({ item }: { item: Workout }) => (
     <WorkoutItem workout={item} navigation={navigation} />
-  );
+  ), [navigation]);
+
+  console.log(`WorkoutList: Rendering ${workouts.length} workouts`);
 
   return (
     <ThemedView style={styles.container}>
@@ -57,7 +88,14 @@ export const WorkoutList = () => {
   );
 };
 
-const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: any }) => {
+const WorkoutItem = ({ 
+  workout, 
+  navigation 
+}: { 
+  workout: Workout; 
+  navigation: NavigationProp<RootStackParamList> 
+}) => {
+  console.log(`WorkoutItem: Rendering workout for ${workout.date}`);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -66,8 +104,8 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
   };
 
   const navigateToExerciseLog = () => {
-    console.log('Navigating to ExerciseLogScreen for date:', workout.date);
-    navigation.navigate('ExerciseLogScreen' as never, { date: workout.date } as never);
+    console.log('WorkoutItem: Navigating to ExerciseLogScreen for date:', workout.date);
+    navigation.navigate('ExerciseLogScreen', { date: workout.date });
   };
 
   const renderExerciseDetails = (exercise: CompletedExercise) => {
@@ -97,6 +135,8 @@ const WorkoutItem = ({ workout, navigation }: { workout: Workout; navigation: an
       <ThemedText style={styles.exerciseDetailLine}>No sets recorded</ThemedText>
     );
   };
+
+  console.log(`WorkoutItem: Expanded state for ${workout.date}: ${isExpanded}`);
 
   return (
     <View style={styles.workoutContainer}>

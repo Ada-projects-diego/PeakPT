@@ -6,7 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { agent, Workout } from '@/api/agent';
 
+type DayComponentProps = {
+  date?: DateData;
+  state?: 'disabled' | 'today' | '';
+  marking?: {
+    marked?: boolean;
+    selected?: boolean;
+  };
+};
+
 export const CalendarView = () => {
+  console.log('CalendarView: Component rendering');
+
   const navigation = useNavigation();
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [key, setKey] = useState(0);
@@ -15,14 +26,17 @@ export const CalendarView = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('CalendarView: Component mounted');
     const fetchWorkouts = async () => {
+      console.log('CalendarView: Fetching workouts');
       try {
         setIsLoading(true);
         const fetchedWorkouts = await agent.Workouts.list();
+        console.log(`CalendarView: Fetched ${fetchedWorkouts.length} workouts`);
         setWorkouts(fetchedWorkouts);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch workouts:', err);
+        console.error('CalendarView: Failed to fetch workouts:', err);
         setError('Failed to load workouts. Please try again.');
       } finally {
         setIsLoading(false);
@@ -30,6 +44,10 @@ export const CalendarView = () => {
     };
 
     fetchWorkouts();
+
+    return () => {
+      console.log('CalendarView: Component will unmount');
+    };
   }, []);
 
   const workoutDates = workouts.reduce((acc, workout) => {
@@ -39,19 +57,22 @@ export const CalendarView = () => {
   }, {} as { [key: string]: { marked: boolean } });
 
   const onDayPress = (day: DateData) => {
-    console.log('Day pressed:', day.dateString);
+    console.log('CalendarView: Day pressed:', day.dateString);
     try {
       navigation.navigate('ExerciseLogScreen' as never, { date: day.dateString } as never);
     } catch (error) {
-      console.error('Navigation error:', error);
+      console.error('CalendarView: Navigation error:', error);
     }
   };
 
   const goToToday = useCallback(() => {
+    console.log('CalendarView: Going to today');
     const today = new Date().toISOString().split('T')[0];
     setCurrentDate(today);
     setKey(prevKey => prevKey + 1);  // Force re-render of Calendar
   }, []);
+
+  console.log(`CalendarView: Rendering calendar with ${Object.keys(workoutDates).length} marked dates`);
 
   return (
     <View style={styles.container}>
@@ -99,12 +120,12 @@ export const CalendarView = () => {
           textMonthFontSize: 16,
           textDayHeaderFontSize: 16,
         }}
-        dayComponent={({date, state, marking}) => {
+        dayComponent={({ date, state, marking }: DayComponentProps) => {
           const isToday = date?.dateString === currentDate;
           const isMarked = marking?.marked;
           return (
             <TouchableOpacity
-              onPress={() => date && onDayPress({dateString: date.dateString, day: date.day, month: date.month, year: date.year, timestamp: date.timestamp})}
+              onPress={() => date && onDayPress(date)}
               style={[
                 styles.dayContainer,
                 isMarked && styles.markedDay,
