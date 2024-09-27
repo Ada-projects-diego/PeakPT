@@ -7,23 +7,24 @@ const api = axios.create({
 });
 
 export interface Set {
-  id: string;
+  _id: string;
   reps: number;
   weight: number;
 }
 
 export interface Exercise {
-  id: string;
+  _id: string;
   name: string;
 }
 
 export interface CompletedExercise {
-  id: string;
+  _id: string;
   name: string;
   sets: Set[];
 }
 
 export interface Workout {
+  _id: string;
   date: string;
   name: string;
   exercises: CompletedExercise[];

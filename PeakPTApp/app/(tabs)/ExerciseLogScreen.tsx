@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { agent, CompletedExercise } from '@/api/agent';
 
 type RouteParams = {
@@ -20,15 +20,7 @@ const ExerciseLogScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setCurrentDate(new Date(routeDate));
-  }, [routeDate]);
-
-  useEffect(() => {
-    fetchExercisesForDate(currentDate);
-  }, [currentDate]);
-
-  const fetchExercisesForDate = async (date: Date) => {
+  const fetchExercisesForDate = useCallback(async (date: Date) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -41,12 +33,19 @@ const ExerciseLogScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentDate(new Date(routeDate));
+      fetchExercisesForDate(new Date(routeDate));
+    }, [routeDate, fetchExercisesForDate])
+  );
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    navigation.setParams({ date: newDate.toISOString() } as never);
+    navigation.setParams({ date: newDate.toISOString().split('T')[0] } as never);
   };
 
   const addExercise = () => {
@@ -55,7 +54,7 @@ const ExerciseLogScreen = () => {
   
   const editExercise = (exercise: CompletedExercise) => {
     navigation.navigate('ExerciseLogEntryScreen' as never, { 
-      exerciseId: exercise.id, 
+      exerciseId: exercise._id, 
       exerciseName: exercise.name, 
       date: currentDate.toISOString().split('T')[0] 
     } as never);
@@ -70,7 +69,7 @@ const ExerciseLogScreen = () => {
       try {
         const dateString = currentDate.toISOString().split('T')[0];
         await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
-        setExercises(exercises.filter(exercise => exercise.id !== deletingId));
+        setExercises(exercises.filter(exercise => exercise._id !== deletingId));
       } catch (err) {
         console.error('Failed to delete exercise:', err);
         setError('Failed to delete exercise. Please try again.');
@@ -89,7 +88,7 @@ const ExerciseLogScreen = () => {
       <View style={styles.exerciseHeader}>
         <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
         <View style={styles.exerciseActions}>
-          {deletingId === item.id ? (
+          {deletingId === item._id ? (
             <>
               <TouchableOpacity onPress={confirmDelete} style={styles.actionButton}>
                 <Ionicons name="checkmark-circle-outline" size={24} color="#4CD964" />
@@ -103,7 +102,7 @@ const ExerciseLogScreen = () => {
               <TouchableOpacity onPress={() => editExercise(item)} style={styles.actionButton}>
                 <Ionicons name="create-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => initiateDelete(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => initiateDelete(item._id)} style={styles.actionButton}>
                 <Ionicons name="trash-outline" size={24} color="#FF3B30" />
               </TouchableOpacity>
             </>
@@ -144,7 +143,7 @@ const ExerciseLogScreen = () => {
         <FlatList
           data={exercises}
           renderItem={renderExercise}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           style={styles.exerciseList}
         />
       )}
