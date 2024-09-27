@@ -4,7 +4,7 @@ import { Calendar, DateData } from 'react-native-calendars';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { agent, Workout } from '@/api/agent'; // Adjust the import path as needed
+import { agent, Workout } from '@/api/agent';
 
 export const CalendarView = () => {
   const navigation = useNavigation();

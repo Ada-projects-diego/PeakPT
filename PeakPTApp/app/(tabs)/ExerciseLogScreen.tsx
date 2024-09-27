@@ -28,7 +28,6 @@ const ExerciseLogScreen = () => {
       const workout = await agent.Workouts.details(dateString);
       setExercises(workout.exercises || []); // Use an empty array if exercises is undefined
     } catch (err) {
-      console.error('Failed to fetch exercises:', err);
       setError('Failed to load exercises. Please try again.');
     } finally {
       setIsLoading(false);
@@ -71,7 +70,6 @@ const ExerciseLogScreen = () => {
         await agent.Workouts.deleteExerciseByDateAndId(dateString, deletingId);
         setExercises(exercises.filter(exercise => exercise._id !== deletingId));
       } catch (err) {
-        console.error('Failed to delete exercise:', err);
         setError('Failed to delete exercise. Please try again.');
       } finally {
         setDeletingId(null);

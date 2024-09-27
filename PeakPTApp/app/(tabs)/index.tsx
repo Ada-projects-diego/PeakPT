@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,22 +7,42 @@ import { CalendarView } from '@/components/CalendarView';
 import { WorkoutList } from '@/containers/workoutList/workoutList';
 
 export default function HomeScreen() {
+  console.log('HomeScreen: Component rendering');
+
   const [isCalendarView, setIsCalendarView] = useState(false);
   const [hasWorkouts] = useState(true);
+
+  useEffect(() => {
+    console.log('HomeScreen: Component mounted');
+    return () => {
+      console.log('HomeScreen: Component will unmount');
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log(`HomeScreen: View changed to ${isCalendarView ? 'Calendar' : 'List'}`);
+  }, [isCalendarView]);
+
+  const toggleView = (isCalendar: boolean | ((prevState: boolean) => boolean)) => {
+    console.log(`HomeScreen: Toggling view to ${isCalendar ? 'Calendar' : 'List'}`);
+    setIsCalendarView(isCalendar);
+  };
+
+  console.log(`HomeScreen: Rendering with ${hasWorkouts ? 'workouts' : 'no workouts'}`);
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>Welcome to PeakPT</ThemedText>
       <ThemedText type="subtitle" style={styles.subtitle}>Scaling peaks, building strength</ThemedText>
       <View style={styles.toggleContainer}>
-        <TouchableOpacity onPress={() => setIsCalendarView(false)} style={styles.iconButton}>
+        <TouchableOpacity onPress={() => toggleView(false)} style={styles.iconButton}>
           <Ionicons 
             name="list" 
             size={24} 
             color={!isCalendarView ? "#007AFF" : "#666"} 
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setIsCalendarView(true)} style={styles.iconButton}>
+        <TouchableOpacity onPress={() => toggleView(true)} style={styles.iconButton}>
           <Ionicons 
             name="calendar" 
             size={24} 
