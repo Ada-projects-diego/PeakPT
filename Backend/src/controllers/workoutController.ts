@@ -90,6 +90,40 @@ export const getExerciseByDateAndName = async (req: Request, res: Response) => {
 export const getExerciseByDateAndId = async (req: Request, res: Response) => {
   try {
     const { date, exerciseId } = req.params;
+    console.log('Fetching exercise by date and ID:', date, exerciseId);
+    // Parse the date string to a Date object
+    const workoutDate = new Date(date);
+
+    // Find the workout for the given date
+    const workout = await Workout.findOne({
+      date: {
+        $gte: new Date(workoutDate.setHours(0, 0, 0, 0)),
+        $lt: new Date(workoutDate.setHours(23, 59, 59, 999))
+      }
+    });
+
+    if (!workout) {
+      return res.status(404).json({ message: 'Workout not found for the given date' });
+    }
+    console.log('Found workout:', workout);
+    const exercise = workout.exercises.find(e => e._id.toHexString() === exerciseId);
+
+    if (!exercise) {
+      // return empty object instead of 404
+      return res.json({ _id: exerciseId, name: '', sets: [] });
+    }
+
+    res.json(exercise);
+  } catch (error) {
+    console.error('Error fetching exercise:', error);
+    res.status(500).json({ message: 'Error fetching exercise', error: error });
+  }
+};
+
+export const getExerciseByDateAndIdV1 = async (req: Request, res: Response) => {
+  try {
+    const { date, exerciseId } = req.params;
+    console.log('Fetching exercise by date and ID:', date, exerciseId);
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
       logger.warn('Invalid date format provided', { date });
@@ -108,7 +142,8 @@ export const getExerciseByDateAndId = async (req: Request, res: Response) => {
     });
 
     if (workout) {
-      const exercise = workout.exercises.find(e => e.id === exerciseId);
+      console.log('Found workout:', workout);
+      const exercise = workout.exercises.find(e => e._id === exerciseId);
       if (exercise) {
         logger.info('Retrieved exercise by date and ID', { date, exerciseId, exercise });
         res.json(exercise);

@@ -16,17 +16,24 @@ const port = process.env.PORT || 5001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(loggingMiddleware);
 
 console.log('Backend server starting...');
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peakptdb')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+const uri = process.env.MONGODB_URI || "mongodb+srv://apiclient:8nyvbH334GSZducD@dev-app-eu-west-01.hzjk3.mongodb.net/peakptdb?retryWrites=true&w=majority&appName=dev-app-eu-west-01";
+const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
 
-// Middleware
-app.use(express.json());
-app.use(loggingMiddleware);
+// Connect to MongoDB
+// if NODE_ENV is development then
+if (process.env.NODE_ENV === 'beta') {
+  console.log('Connecting to beta database...');
+  connectToBetaDatabase();
+}
+else {
+  mongoose.connect(process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/peakptdb')
+  .then(() => console.log('Connected to MongoDB through local docker container'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+}
 
 // Routes
 app.use(['/docs', '/api-docs'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -39,6 +46,36 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ message: 'Internal server error' });
 });
 
-app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
+// Start the server only after successfully connecting to the database
+mongoose.connection.once('open', () => {
+  app.listen(port, () => {
+    console.log(`Backend server running on http://localhost:${port}`);
+  });
 });
+
+// Handle database connection errors
+mongoose.connection.on('error', (error) => {
+  console.error('MongoDB connection error:', error);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed.');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+});
+
+async function connectToBetaDatabase() {
+  try {
+    await mongoose.connect(uri, clientOptions);
+    console.log("Successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+    process.exit(1);
+  }
+}

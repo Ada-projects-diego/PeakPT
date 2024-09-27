@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { agent, Set } from '@/api/agent';
+
+// Good page to talk about, especially the callback function stuff
+// TODO: problem with ids being undefined but needed to be passed to the backend
 
 type RouteParams = {
   exerciseId: string;
@@ -24,7 +27,9 @@ const ExerciseLogEntryScreen = () => {
 
   const fetchExerciseDetails = async () => {
     try {
+      console.log('Fetching exercise details:', date, exerciseId);
       const exercise = await agent.Workouts.getExerciseByDateAndId(date, exerciseId);
+      console.log('Exercise details:', exercise);
       setSets(exercise.sets);
     } catch (error) {
       console.error('Failed to fetch exercise details:', error);
@@ -47,11 +52,11 @@ const ExerciseLogEntryScreen = () => {
 
   const handleSave = async () => {
     try {
-      const newSet = { reps: parseInt(reps), weight: parseFloat(weight) };
+      const newSet: Omit<Set, "id"> = { reps: parseInt(reps), weight: parseFloat(weight) };
       const updatedExercise = await agent.Workouts.addSet(date, exerciseName, newSet);
       setSets(updatedExercise.sets);
-      setWeight('0');
-      setReps('0');
+      setWeight(weight);
+      setReps(reps);
     } catch (error) {
       console.error('Failed to save set:', error);
     }
@@ -95,7 +100,7 @@ const ExerciseLogEntryScreen = () => {
   const handleDelete = async () => {
     try {
       await agent.Workouts.deleteSets(date, exerciseId, selectedSets);
-      setSets(sets.filter(set => !selectedSets.includes(set.id)));
+      setSets(sets.filter(set => !selectedSets.includes(set._id)));
       setSelectedSets([]);
     } catch (error) {
       console.error('Failed to delete sets:', error);
@@ -117,10 +122,10 @@ const ExerciseLogEntryScreen = () => {
     <TouchableOpacity
       style={[
         styles.setItem,
-        selectedSets.includes(item.id) && styles.selectedSetItem
+        selectedSets.includes(item._id) && styles.selectedSetItem
       ]}
-      onPress={() => toggleSetSelection(item.id)}
-      key={`${item.id}-${index}`} // Add this line
+      onPress={() => toggleSetSelection(item._id)}
+      key={`${item._id}-${index}`} // Add this line
     >
       <ThemedText style={styles.setText}>
         {index + 1}   {item.weight} kgs   {item.reps} reps
@@ -203,7 +208,7 @@ const ExerciseLogEntryScreen = () => {
       <FlatList
         data={sets}
         renderItem={renderSet}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item, index) => `${item._id}-${index}`}
         style={styles.setList}
       />
     </ThemedView>
