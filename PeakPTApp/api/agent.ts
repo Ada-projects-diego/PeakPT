@@ -54,6 +54,8 @@ export const agent = {
       api.put<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, { updates }).then(responseBody),
     addSet: (date: string, exerciseName: string, set: Omit<Set, '_id'>): Promise<CompletedExercise> =>
       api.post<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, set).then(responseBody),
+    logWorkoutVision: (date: string): Promise<Workout> =>
+      api.post<Workout>(`/workouts/log-wk-vision/${date}`).then(responseBody),
   },
   Exercises: {
     list: (): Promise<Exercise[]> => 
