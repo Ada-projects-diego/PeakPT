@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -101,6 +101,20 @@ const ExerciseLogScreen = () => {
     setDeletingId(null);
   }, []);
 
+  const logWorkoutVision = useCallback(async () => {
+    console.log('ExerciseLogScreen: Logging workout via vision');
+    try {
+      const dateString = currentDate.toISOString().split('T')[0];
+      await agent.Workouts.logWorkoutVision(dateString);
+      console.log('ExerciseLogScreen: Workout logged successfully via vision');
+      // Refetch exercises after logging
+      fetchExercisesForDate(currentDate);
+    } catch (err) {
+      console.error('ExerciseLogScreen: Failed to log workout via vision', err);
+      Alert.alert('Error', 'Failed to log workout via vision. Please try again.');
+    }
+  }, [currentDate, fetchExercisesForDate]);
+
   const renderExercise = useCallback(({ item }: { item: CompletedExercise }) => (
     <View style={styles.exerciseContainer}>
       <View style={styles.exerciseHeader}>
@@ -170,6 +184,10 @@ const ExerciseLogScreen = () => {
         />
       )}
 
+      <TouchableOpacity style={styles.visionButton} onPress={logWorkoutVision}>
+        <Ionicons name="camera" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.addButton} onPress={addExercise}>
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
@@ -233,6 +251,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 20,
+    backgroundColor: '#007AFF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  visionButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 100, 
     backgroundColor: '#007AFF',
     width: 60,
     height: 60,
