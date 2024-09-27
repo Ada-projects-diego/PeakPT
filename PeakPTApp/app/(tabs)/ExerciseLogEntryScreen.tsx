@@ -6,9 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { agent, Set } from '@/api/agent';
 
-
 // Good page to talk about, especially the callback function stuff
-
 // TODO: problem with ids being undefined but needed to be passed to the backend
 
 type RouteParams = {
