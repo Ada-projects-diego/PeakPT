@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISet extends Document {
+  _id: mongoose.Types.ObjectId;
   reps: number;
   weight: number;
 }

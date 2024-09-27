@@ -86,22 +86,26 @@ export const getExerciseByDateAndName = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error fetching exercise', error });
   }
 }
+
 export const getExerciseByDateAndId = async (req: Request, res: Response) => {
   const { date, exerciseId } = req.params;
   logger.info('Fetching exercise by date and ID', { date, exerciseId });
+  
   try {
     const workoutDate = new Date(date);
+    const startOfDay = new Date(workoutDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(workoutDate.setHours(23, 59, 59, 999));
 
     const workout = await Workout.findOne({
       date: {
-        $gte: new Date(workoutDate.setHours(0, 0, 0, 0)),
-        $lt: new Date(workoutDate.setHours(23, 59, 59, 999))
+        $gte: startOfDay,
+        $lt: endOfDay
       }
     });
 
     if (!workout) {
       logger.info('Workout not found for the given date', { date });
-      return res.status(404).json({ message: 'Workout not found for the given date' });
+      return res.json({ _id: exerciseId, name: '', sets: [] });
     }
 
     logger.debug('Found workout', { workoutId: workout._id });
@@ -422,7 +426,12 @@ export const bulkUpdateSetsByDateAndExerciseName = async (req: Request, res: Res
 export const addNewSetToExercise = async (req: Request, res: Response) => {
   const { date, exerciseName } = req.params;
   const { reps, weight } = req.body;
-  logger.info('Adding new set to exercise', { date, exerciseName, reps, weight });
+  if (!reps || !weight || date === undefined || exerciseName === undefined) {
+    logger.warn('Reps and weight are required in the request body');
+    return res.status(400).json({ message: 'Reps and weight are required in the request body' });
+  }
+
+  logger.info('Attempting to add new set to exercise and workout with following params', { date, exerciseName, reps, weight });
 
   try {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -451,43 +460,54 @@ export const addNewSetToExercise = async (req: Request, res: Response) => {
     });
 
     if (!workout) {
+      // Scenario 1: No existing workout
       logger.info('Creating new workout', { date });
       workout = new Workout({
         date: startDate,
         name: "Custom workout",
-        exercises: []
+        exercises: [{
+          name: exerciseName,
+          sets: [{
+            reps,
+            weight
+          }]
+        }]
       });
-    }
-
-    let exercise = workout.exercises.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
-
-    if (!exercise) {
-      logger.info('Adding new exercise to workout', { exerciseName });
-      exercise = {
-        id: (workout.exercises.length + 1).toString(),
-        name: exerciseName,
-        sets: []
-      };
-      workout.exercises.push(exercise as ICompletedExercise);
-    }
-
-    const newSet: ISet = {
-      reps,
-      weight
-    };
-    if (exercise) {
-      exercise.sets.push(newSet);
-      logger.info('New set added to exercise', { exerciseName, setId: newSet.id });
     } else {
-      logger.error('Failed to add new set: exercise is undefined', { exerciseName });
-      return res.status(500).json({ message: 'Failed to add new set: exercise is undefined' });
+      let exercise = workout.exercises.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+
+      if (!exercise) {
+        // Scenario 2: Existing workout, but new exercise
+        logger.info('Adding new exercise to workout', { exerciseName });
+        exercise = {
+          name: exerciseName,
+          sets: [{
+            reps,
+            weight
+          }]
+        };
+        workout.exercises.push(exercise);
+      } else {
+        // Scenario 3: Existing workout and existing exercise
+        logger.info('Adding new set to existing exercise', { exerciseName });
+        exercise.sets.push({
+          reps,
+          weight
+        });
+      }
     }
-    logger.info('New set added to exercise', { exerciseName, setId: newSet.id });
 
     await workout.save();
     logger.info('Workout saved successfully', { workoutId: workout._id });
 
-    res.status(201).json(exercise);
+    // Find the updated exercise to return
+    const updatedExercise = workout.exercises.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+    if (!updatedExercise) {
+      logger.error('Failed to find updated exercise', { exerciseName });
+      return res.status(500).json({ message: 'Failed to find updated exercise' });
+    }
+
+    res.status(201).json(updatedExercise);
   } catch (error) {
     logger.error('Error in addNewSetToExercise', { date, exerciseName, error });
     res.status(500).json({ message: 'Error adding new set', error });
