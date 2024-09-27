@@ -23,14 +23,14 @@ const clientOptions = { serverApi: { version: '1', strict: true, deprecationErro
 
 // Connect to MongoDB
 // if NODE_ENV is development then
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'beta') {
+  console.log('Connecting to beta database...');
+  connectToBetaDatabase();
+}
+else {
   mongoose.connect(process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/peakptdb')
   .then(() => console.log('Connected to MongoDB through local docker container'))
   .catch((err) => console.error('MongoDB connection error:', err));
-}
-else {
-  console.log('Connecting to beta database...');
-  connectToBetaDatabase();
 }
 // Routes
 app.use(['/docs', '/api-docs'], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
