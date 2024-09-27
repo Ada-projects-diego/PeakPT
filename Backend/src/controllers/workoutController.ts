@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Workout, { ISet, ICompletedExercise } from '../models/workout';
 import { logger } from '../middleware/loggingMiddleware';
+import { getWorkoutFromVision } from '../services/visionService';
+import path from 'path';
 
 export const getWorkouts = async (req: Request, res: Response) => {
   logger.info('Fetching all workouts');
@@ -511,5 +513,58 @@ export const addNewSetToExercise = async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Error in addNewSetToExercise', { date, exerciseName, error });
     res.status(500).json({ message: 'Error adding new set', error });
+  }
+};
+
+export const logWorkoutVision = async (req: Request, res: Response) => {
+  const IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'hand_written_workout.jpg');
+  const { date } = req.params;
+  logger.info('Logging workout from vision', { date, imagePath: IMAGE_PATH });
+  
+  try {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      logger.warn('Invalid date format provided', { date });
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    // Check if a workout already exists for this date
+    const startDate = new Date(date + 'T00:00:00.000Z');
+    const endDate = new Date(date + 'T23:59:59.999Z');
+    const existingWorkout = await Workout.findOne({
+      date: {
+        $gte: startDate,
+        $lt: endDate
+      }
+    });
+
+    if (existingWorkout) {
+      logger.warn('Workout already exists for this date', { date });
+      return res.status(409).json({ message: 'A workout already exists for this date.' });
+    }
+
+    // Check if the image file exists
+    const fs = require('fs').promises;
+    try {
+      await fs.access(IMAGE_PATH);
+    } catch (error) {
+      logger.error('Image file not found', { imagePath: IMAGE_PATH, error });
+      return res.status(500).json({ message: 'Image file not found' });
+    }
+
+    const workoutData = await getWorkoutFromVision(date, IMAGE_PATH);
+    
+    const workout = new Workout(workoutData);
+    await workout.save();
+
+    logger.info('Workout logged from vision', { workoutId: workout._id, date });
+    res.status(201).json(workout);
+  } catch (error) {
+    logger.error('Error logging workout from vision', { date, error });
+    if (error instanceof Error) {
+      res.status(500).json({ message: 'Error logging workout from vision', error: error.message });
+    } else {
+      res.status(500).json({ message: 'Error logging workout from vision', error: 'An unknown error occurred' });
+    }
   }
 };
