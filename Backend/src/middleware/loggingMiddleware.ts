@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 // Create a Winston logger
 const logger = winston.createLogger({
-  level: '[PEAKPT INFO]',
+  level: 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
