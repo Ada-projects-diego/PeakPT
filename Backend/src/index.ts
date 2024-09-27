@@ -31,7 +31,11 @@ mongoose.connect(uri)
     console.log('Connected to MongoDB');
     
     // Check for required collections
-    const collections = await mongoose.connection.db.listCollections().toArray();
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection is not established');
+    }
+    const collections = await db.listCollections().toArray();
     const collectionNames = collections.map(c => c.name);
     logger.info('Collections found:', collectionNames);
     
