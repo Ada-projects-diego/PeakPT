@@ -1,61 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, View, FlatList, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { agent, Exercise } from '@/api/agent';
 
-type RouteParams = {
-  date: string;
+type RootStackParamList = {
+  ExerciseLibraryScreen: { date: string };
+  ExerciseLogEntryScreen: { exerciseId: string; exerciseName: string; date: string };
 };
 
+type ExerciseLibraryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseLibraryScreen'>;
+type ExerciseLibraryScreenRouteProp = RouteProp<RootStackParamList, 'ExerciseLibraryScreen'>;
+
 const ExerciseLibraryScreen = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { date } = route.params as RouteParams;
+  console.log('ExerciseLibraryScreen: Rendering component');
+  const navigation = useNavigation<ExerciseLibraryScreenNavigationProp>();
+  const route = useRoute<ExerciseLibraryScreenRouteProp>();
+  const { date } = route.params;
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchExercises();
-  }, []);
-
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async () => {
+    console.log('ExerciseLibraryScreen: Fetching exercises');
     try {
       const data = await agent.Exercises.list();
+      console.log(`ExerciseLibraryScreen: Fetched ${data.length} exercises`);
       setExercises(data);
-      setFilteredExercises(data);
       setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching exercises:', error);
+      console.error('ExerciseLibraryScreen: Error fetching exercises:', error);
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleSearch = (query: string) => {
+  useEffect(() => {
+    fetchExercises();
+  }, [fetchExercises]);
+
+  const handleSearch = useCallback((query: string) => {
+    console.log('ExerciseLibraryScreen: Searching for', query);
     setSearchQuery(query);
-    const filtered = exercises.filter(exercise =>
-      exercise.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredExercises(filtered);
-  };
+  }, []);
 
-  const renderExerciseItem = ({ item }: { item: Exercise }) => (
+  const filteredExercises = useMemo(() => {
+    console.log('ExerciseLibraryScreen: Filtering exercises');
+    return exercises.filter(exercise =>
+      exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [exercises, searchQuery]);
+
+  const renderExerciseItem = useCallback(({ item }: { item: Exercise }) => (
     <TouchableOpacity 
       style={styles.exerciseItem}
-      onPress={() => navigation.navigate('ExerciseLogEntryScreen' as never, { 
-        exerciseId: item._id, 
-        exerciseName: item.name, 
-        date: date 
-      } as never)}
+      onPress={() => {
+        console.log('ExerciseLibraryScreen: Navigating to ExerciseLogEntryScreen for', item.name);
+        navigation.navigate('ExerciseLogEntryScreen', { 
+          exerciseId: item._id, 
+          exerciseName: item.name, 
+          date: date 
+        });
+      }}
     >
       <ThemedText style={styles.exerciseName}>{item.name}</ThemedText>
       <Ionicons name="chevron-forward" size={20} color="#808080" />
     </TouchableOpacity>
-  );
+  ), [navigation, date]);
+
+  console.log(`ExerciseLibraryScreen: Rendering ${filteredExercises.length} exercises`);
 
   if (isLoading) {
     return (

@@ -52,7 +52,7 @@ export const agent = {
       api.delete<void>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, { data: { setIds } }).then(responseBody),
     updateSets: (date: string, exerciseName: string, updates: Array<Partial<Set> & { id: string }>): Promise<CompletedExercise> =>
       api.put<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, { updates }).then(responseBody),
-    addSet: (date: string, exerciseName: string, set: Omit<Set, 'id'>): Promise<CompletedExercise> =>
+    addSet: (date: string, exerciseName: string, set: Omit<Set, '_id'>): Promise<CompletedExercise> =>
       api.post<CompletedExercise>(`/workouts/${date}/exercises/byname/${exerciseName}/sets`, set).then(responseBody),
   },
   Exercises: {
