@@ -6,14 +6,17 @@
   "scripts": {
     "build:env": "node scripts/build-environment.js",
     "install:all": "node scripts/install-all.js",
-    "setup:db": "node scripts/setup-db.js"
+    "setup:db": "node scripts/setup-db.js",
+    "setup:db:dev": "node scripts/local-setup-db.js",
+    "setup:db:beta": "node scripts/beta-setup-db.js"
   },
   "author": "LtJauman",
   "license": "ISC",
   "dependencies": {
     "concurrently": "^9.0.1",
     "dotenv": "^16.4.5",
-    "mongodb": "^6.9.0"
+    "mongodb": "^6.9.0",
+    "mongoose": "^8.6.4"
   },
   "devDependencies": {
     "typescript": "^5.6.2"
