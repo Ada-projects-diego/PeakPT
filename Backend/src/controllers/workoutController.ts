@@ -446,6 +446,7 @@ export const addNewSetToExercise = async (req: Request, res: Response) => {
       logger.warn('Invalid reps provided', { reps });
       return res.status(400).json({ message: 'Reps must be a number greater than 0' });
     }
+    
     if (typeof weight !== 'number' || weight < 0) {
       logger.warn('Invalid weight provided', { weight });
       return res.status(400).json({ message: 'Weight must be a non-negative number' });
