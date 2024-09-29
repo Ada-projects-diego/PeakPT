@@ -1,4 +1,4 @@
-import { IWorkout, ICompletedExercise, ISet } from '../models/workout';
+import { IWorkout } from '../models/workout';
 import OpenAI from 'openai';
 import fs from 'fs/promises';
 import dotenv from 'dotenv';
